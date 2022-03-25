@@ -160,7 +160,7 @@ class Request
 
 		// Extract the information we need from $_FILES.
 		$return = array();
-		foreach ($_FILES as $key => $data) {
+		foreach ($_FILES as $data) {
 			foreach ($data as $key2 => $data2) {
 
 				// We only want the name and type.

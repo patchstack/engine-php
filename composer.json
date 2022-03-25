@@ -16,5 +16,8 @@
             "name": "Patchstack",
             "email": "support@patchstack.com"
         }
-    ]
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "9"
+    }
 }

@@ -51,6 +51,13 @@ class Processor
 	private $request;
 
 	/**
+	 * The response that will be sent, depending on the action executed by the processor.
+	 * 
+	 * @var Response
+	 */
+	private $response;
+
+	/**
 	 * Creates a new processor instance.
 	 * 
 	 * @param array $firewallRules
@@ -69,6 +76,7 @@ class Processor
 		$this->options = array_merge($this->options, $options);
 		$this->extension = $extension;
 		$this->request = new Request($this->options);
+		$this->response = new Response($this->options);
 	}
 
 	/**
@@ -172,7 +180,8 @@ class Processor
 				$this->extension->logRequest($rule['id'], $request, 'LOG');
 			} elseif ($firewall_rule->type == 'REDIRECT') {
 				$this->extension->logRequest($rule['id'], $request, 'REDIRECT');
-				Response::redirect($firewall_rule->type_params);
+				$this->response->redirect($firewall_rule->type_params);
+				exit;
 			}
 		}
 	}
@@ -180,9 +189,9 @@ class Processor
 	/**
 	 * The legacy firewall processor will only iterate over the general firewall rules.
 	 * 
-	 * @return void
+	 * @return boolean
 	 */
-	private function legacyProcessor()
+	public function legacyProcessor()
 	{
 		// Obtain the IP address and request data.
 		$client_ip = $this->extension->getIpAddress();
@@ -262,10 +271,13 @@ class Processor
 					$this->extension->logRequest($firewall_rule['id'], $request, 'LOG');
 				} elseif ($rule_terms->type == 'REDIRECT') {
 					$this->extension->logRequest($firewall_rule['id'], $request, 'REDIRECT');
-					Response::redirect($rule_terms->type_params);
+					$this->response->redirect($rule_terms->type_params);
+					exit;
 				}
 			}
 		}
+
+		return true;
 	}
 
 	/**
