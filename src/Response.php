@@ -24,12 +24,12 @@ class Response
 
     /**
      * Perform a redirect if the request must be redirected to somewhere else.
-     * The caller should exit the script.
      * 
      * @param string $redirectTo
+     * @param boolean $mustExit
      * @return void
      */
-    public function redirect($redirectTo)
+    public function redirect($redirectTo = '', $mustExit = true)
     {
         // Don't redirect an invalid URL.
         if (!$redirectTo || filter_var($redirectTo, FILTER_VALIDATE_URL) === false) {
@@ -38,5 +38,10 @@ class Response
 
         // Perform the redirect.
         header('Location: ' . $redirectTo, true, 302);
+
+        // In some scenarios we might want to control if the script should exit executing.
+        if ($mustExit) {
+            exit;
+        }
     }
 }

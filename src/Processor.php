@@ -188,10 +188,11 @@ class Processor
 
 	/**
 	 * The legacy firewall processor will only iterate over the general firewall rules.
+	 * Returns true if all rules were passed. False if any rule was hit.
 	 * 
 	 * @return boolean
 	 */
-	public function legacyProcessor()
+	public function legacyProcessor($mustExit = true)
 	{
 		// Obtain the IP address and request data.
 		$client_ip = $this->extension->getIpAddress();
@@ -266,13 +267,18 @@ class Processor
 			if ($blocked_count >= $count_rules) {
 				if ($rule_terms->type == 'BLOCK') {
 					$this->extension->logRequest($firewall_rule['id'], $request, 'BLOCK');
-					$this->extension->forceExit($firewall_rule['id']);
+					
+					// Do we have to exit the page or simply return false?
+					if($mustExit){
+						$this->extension->forceExit($firewall_rule['id']);
+					}else{
+						return false;
+					}
 				} elseif ($rule_terms->type == 'LOG') {
 					$this->extension->logRequest($firewall_rule['id'], $request, 'LOG');
 				} elseif ($rule_terms->type == 'REDIRECT') {
 					$this->extension->logRequest($firewall_rule['id'], $request, 'REDIRECT');
-					$this->response->redirect($rule_terms->type_params);
-					exit;
+					$this->response->redirect($rule_terms->type_params, $mustExit);
 				}
 			}
 		}
