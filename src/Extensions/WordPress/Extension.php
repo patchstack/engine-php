@@ -236,17 +236,6 @@ class Extension implements ExtensionInterface
 
 		foreach ($whitelistRules as $whitelist) {
 			$whitelist_rule = json_decode($whitelist['rule']);
-			$matched_rules  = 0;
-
-			// If matches on all request methods, only 1 rule match is required to whitelist.
-			if ($whitelist_rule->method === 'ALL') {
-				$count_rules = 1;
-			} else {
-				if (!is_null($whitelist_rule)) {
-					$count_rules = $whitelist_rule->rules;
-					$count_rules = $this->countRules($count_rules);
-				}
-			}
 
 			// If an IP address match is given, determine if it matches.
 			$ip = isset($whitelist_rule->rules, $whitelist_rule->rules->ip_address) ? $whitelist_rule->rules->ip_address : null;
@@ -275,58 +264,26 @@ class Extension implements ExtensionInterface
 
 				if ($whitelist_rule->method == $requests['method'] || $whitelist_rule->method == 'ALL') {
 					$test = strtolower(preg_replace('/(?!^)[A-Z]{2,}(?=[A-Z][a-z])|[A-Z][a-z]/', '->$0', $key));
-					$rule = array_reduce(
-						explode('->', $test),
-						function ($o, $p) {
-							if (!isset($o->$p)) {
-								return null;
-							}
+					$exp = explode('->', $test);
 
-							return $o->$p;
-						},
-						$whitelist_rule
-					);
+					// Determine if a rule exists for this request.
+					$rule = $whitelist_rule;
+					foreach ($exp as $var){
+						if(!isset($rule->$var)){
+							$rule = null;
+							continue;
+						}
+						$rule = $rule->$var;
+					}
 
-					if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request)) {
-						$matched_rules++;
+					if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request) && $whitelisted_ip) {
+						return true;
 					}
 				}
-			}
-
-			if ($matched_rules >= $count_rules && $whitelisted_ip) {
-				return true;
 			}
 		}
 
 		return false;
-	}
-
-	/**
-	 * Count the number of rules.
-	 *
-	 * @param array $array
-	 * @return integer
-	 */
-	private function countRules($array)
-	{
-		$counter = 0;
-		if (is_object($array)) {
-			$array = (array) $array;
-		}
-
-		if ($array['uri']) {
-			$counter++;
-		}
-
-		foreach (array('body', 'params', 'headers') as $type) {
-			foreach ($array[$type] as $key => $value) {
-				if (!is_null($value)) {
-					$counter++;
-				}
-			}
-		}
-
-		return $counter;
 	}
 
 	/**
@@ -340,7 +297,7 @@ class Extension implements ExtensionInterface
 	{
 		$is_matched = false;
 		if (is_array($request)) {
-			foreach ($request as $key => $value) {
+			foreach ($request as $value) {
 				$is_matched = $this->isRuleMatch($rule, $value);
 				if ($is_matched) {
 					return $is_matched;

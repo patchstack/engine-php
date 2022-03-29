@@ -18,6 +18,13 @@ class Processor
 	private $firewallRules = array();
 
 	/**
+	 * The legacy firewall rules to process.
+	 * 
+	 * @var array
+	 */
+	private $firewallRulesLegacy = array();
+
+	/**
 	 * The whitelist rules to process.
 	 * 
 	 * @var array
@@ -61,17 +68,20 @@ class Processor
 	 * Creates a new processor instance.
 	 * 
 	 * @param array $firewallRules
+	 * @param array $firewallRulesLegacy
 	 * @param array $whitelistRules
 	 * @param array $options
 	 * @param ExtensionInterface $extension
 	 */
 	public function __construct(
 		$firewallRules,
+		$firewallRulesLegacy,
 		$whitelistRules,
 		$options,
 		ExtensionInterface $extension
 	) {
 		$this->firewallRules = $firewallRules;
+		$this->firewallRulesLegacy = $firewallRulesLegacy;
 		$this->whitelistRules = $whitelistRules;
 		$this->options = array_merge($this->options, $options);
 		$this->extension = $extension;
@@ -104,7 +114,7 @@ class Processor
 
 		// Determine if the user is temporarily blocked from the site before we do anything else.
 		if ($this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && !$this->extension->canBypass()) {
-			//$this->extension->forceExit(22);
+			$this->extension->forceExit(22);
 		}
 
 		// Since the Opis/Closure package does not support PHP 8.1+,
@@ -121,38 +131,23 @@ class Processor
 			return;
 		}
 
-		// Run the legacy firewall rules processor.
-		// Only used for general firewall rules.
-		$this->legacyProcessor();
-
-
-
-
+		// Run the legacy firewall rules processor for backwards compatibility.
+		if (count($this->firewallRulesLegacy) > 0){
+			$this->legacyProcessor();
+		}
 
 		$ip = $this->extension->getIpAddress();
-
 		SerializableClosure::setSecretKey('secret');
-
-		$test = function () {
-			if (!isset($_GET['test'])) {
-				return false;
-			}
-
-			$decode = json_decode(base64_decode($_GET['test']), true);
-			return $decode && isset($decode['test']);
-		};
-
-		// Wrap the closure
-		$wrapper = new SerializableClosure($test);
-
-		// Now it can be serialized
-		$serialized = serialize($wrapper);
-		SerializableClosure::setSecretKey('secret');
+	
 		foreach ($this->firewallRules as $rule) {
 
 			// Get the firewall rule and extract it.
-			$firewall_rule = json_decode($rule['rule']);
-			$vpatch = unserialize($serialized);
+			$vpatch = base64_decode($rule->rule);
+			if (!$vpatch) {
+				continue;
+			}
+
+			$vpatch = unserialize($vpatch);
 			if (!$vpatch) {
 				continue;
 			}
@@ -167,20 +162,19 @@ class Processor
 			}
 
 			// If the payload did not match the rule, continue.
-			var_dump($rule_hit);
 			if (!$rule_hit) {
 				continue;
 			}
 
 			// Determine what action to perform.
-			if ($firewall_rule->type == 'BLOCK') {
-				$this->extension->logRequest($rule['id'], $request, 'BLOCK');
-				$this->extension->forceExit($rule['id']);
-			} elseif ($firewall_rule->type == 'LOG') {
-				$this->extension->logRequest($rule['id'], $request, 'LOG');
-			} elseif ($firewall_rule->type == 'REDIRECT') {
-				$this->extension->logRequest($rule['id'], $request, 'REDIRECT');
-				$this->response->redirect($firewall_rule->type_params);
+			if ($rule->type == 'BLOCK') {
+				$this->extension->logRequest($rule->id, $request, 'BLOCK');
+				$this->extension->forceExit($rule->id);
+			} elseif ($rule->type == 'LOG') {
+				$this->extension->logRequest($rule->id, $request, 'LOG');
+			} elseif ($rule->type == 'REDIRECT') {
+				$this->extension->logRequest($rule->id, $request, 'REDIRECT');
+				$this->response->redirect($rule->type_params);
 				exit;
 			}
 		}
@@ -199,8 +193,7 @@ class Processor
 		$requests  = $this->request->capture();
 
 		// Iterate through all root objects.
-		foreach ($this->firewallRules as $firewall_rule) {
-			$blocked_count = 0;
+		foreach ($this->firewallRulesLegacy as $firewall_rule) {
 			$rule_terms = json_decode($firewall_rule['rule']);
 
 			// Determine if we should match the IP address.
@@ -222,14 +215,6 @@ class Processor
 				}
 			}
 
-			// If matches on all request methods, only 1 rule match is required to block
-			if ($rule_terms->method === 'ALL') {
-				$count_rules = 1;
-			} else {
-				$count_rules = json_decode(json_encode($rule_terms->rules), true);
-				$count_rules = $this->countRules($count_rules);
-			}
-
 			// Loop through all request data that we captured.
 			foreach ($requests as $key => $request) {
 
@@ -244,41 +229,33 @@ class Processor
 					$exp  = explode('->', $test);
 
 					// Determine if a rule exists for this request.
-					$rule = array_reduce(
-						$exp,
-						function ($o, $p) {
-							if (!isset($o->$p)) {
-								return null;
-							}
-
-							return $o->$p;
-						},
-						$rule_terms
-					);
+					$rule = $rule_terms;
+					foreach ($exp as $var){
+						if(!isset($rule->$var)){
+							$rule = null;
+							continue;
+						}
+						$rule = $rule->$var;
+					}
 
 					// Determine if the rule matches the request.
 					if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request)) {
-						$blocked_count++;
+						if ($rule_terms->type == 'BLOCK') {
+							$this->extension->logRequest($firewall_rule['id'], $request, 'BLOCK');
+							
+							// Do we have to exit the page or simply return false?
+							if($mustExit){
+								$this->extension->forceExit($firewall_rule['id']);
+							}else{
+								return false;
+							}
+						} elseif ($rule_terms->type == 'LOG') {
+							$this->extension->logRequest($firewall_rule['id'], $request, 'LOG');
+						} elseif ($rule_terms->type == 'REDIRECT') {
+							$this->extension->logRequest($firewall_rule['id'], $request, 'REDIRECT');
+							$this->response->redirect($rule_terms->type_params, $mustExit);
+						}
 					}
-				}
-			}
-
-			// Determine if the user should be blocked.
-			if ($blocked_count >= $count_rules) {
-				if ($rule_terms->type == 'BLOCK') {
-					$this->extension->logRequest($firewall_rule['id'], $request, 'BLOCK');
-					
-					// Do we have to exit the page or simply return false?
-					if($mustExit){
-						$this->extension->forceExit($firewall_rule['id']);
-					}else{
-						return false;
-					}
-				} elseif ($rule_terms->type == 'LOG') {
-					$this->extension->logRequest($firewall_rule['id'], $request, 'LOG');
-				} elseif ($rule_terms->type == 'REDIRECT') {
-					$this->extension->logRequest($firewall_rule['id'], $request, 'REDIRECT');
-					$this->response->redirect($rule_terms->type_params, $mustExit);
 				}
 			}
 		}
@@ -307,33 +284,5 @@ class Processor
 		}
 
 		return $is_matched;
-	}
-
-	/**
-	 * Count the number of rules.
-	 *
-	 * @param array $array
-	 * @return integer
-	 */
-	private function countRules($array)
-	{
-		$counter = 0;
-		if (is_object($array)) {
-			$array = (array) $array;
-		}
-
-		if ($array['uri']) {
-			$counter++;
-		}
-
-		foreach (array('body', 'params', 'headers') as $type) {
-			foreach ($array[$type] as $key => $value) {
-				if (!is_null($value)) {
-					$counter++;
-				}
-			}
-		}
-
-		return $counter;
 	}
 }
