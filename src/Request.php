@@ -192,8 +192,13 @@ class Request
 			'GET'  => $_GET,
 		);
 
+		// No need to continue if the option does not exist.
+		if(!isset($this->options['whitelistKeysRules'])){
+			return $data;
+		}
+
 		// Determine if there are any keys we should remove from the data set.
-		if (count($this->options['whitelistKeysRules']) == 0 || !is_array($this->options['whitelistKeysRules'])) {
+		if (!is_array($this->options['whitelistKeysRules']) || count($this->options['whitelistKeysRules']) == 0) {
 			return $data;
 		}
 

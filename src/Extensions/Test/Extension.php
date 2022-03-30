@@ -64,7 +64,7 @@ class Extension implements ExtensionInterface
     }
 
     /**
-     * Determine if the request should be passed without going through the firewall.
+     * Determine if the request should not go through the firewall.
      * 
      * @param array $whitelistRules
      * @param array $request

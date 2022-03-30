@@ -1,0 +1,24 @@
+[
+    {
+        "id":1,
+        "title":"Block test parameter being present in the URL","rule":"QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjI5OTp7QExNVWRYZWZmVTlHMzJPUk1EWGlxZGNNby9RaXdpVytnZFNRL1h6K1U3Z3M9LmE6NTp7czozOiJ1c2UiO2E6MTp7czoyOiJpcCI7czo0OiJ0ZXN0Ijt9czo4OiJmdW5jdGlvbiI7czoxMDk6ImZ1bmN0aW9uICgpIHVzZSAoJGlwKXsNCiAgICBpZiAoIWlzc2V0KCRfR0VUWyd0ZXN0J10pKSB7DQogICAgICAgIHJldHVybiBmYWxzZTsNCiAgICB9DQoNCiAgICByZXR1cm4gdHJ1ZTsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDAzMzdmMTY2ZjAwMDAwMDAwM2E3MDNkNjIiO319",
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":2,
+        "title":"Block backdoor parameter in payload set to mybackdoor and user agent containing some_backdoor_agent.","rule":"QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjQ3Mzp7QDhaZi9mUkxHb1FrZUNYVytDaW9OdTN5UXhpVEhvaDFNQnJHbDIwUzhSUTA9LmE6NTp7czozOiJ1c2UiO2E6MTp7czoyOiJpcCI7czo0OiJ0ZXN0Ijt9czo4OiJmdW5jdGlvbiI7czoyODM6ImZ1bmN0aW9uICgpIHVzZSAoJGlwKXsNCiAgICAkdXNlcl9hZ2VudCA9ICRfU0VSVkVSWydIVFRQX1VTRVJfQUdFTlQnXTsNCg0KICAgIGlmKGlzc2V0KCRfUE9TVFsnYmFja2Rvb3InXSkgJiYgJF9QT1NUWydiYWNrZG9vciddID09ICdteWJhY2tkb29yJyl7DQogICAgICAgIGlmKFxzdHJpcG9zKCR1c2VyX2FnZW50LCAnc29tZV9iYWNrZG9vcl9hZ2VudCcpICE9PSBmYWxzZSl7DQogICAgICAgICAgICByZXR1cm4gdHJ1ZTsNCiAgICAgICAgfQ0KICAgIH0NCg0KICAgIHJldHVybiBmYWxzZTsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDAwMzQzZmM3MDAwMDAwMDAwMTE0NTk4YjciO319",
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":3,
+        "title":"Block a base64 json encoded request with the user_role parameter set to administrator",
+        "rule":"QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjQ0MDp7QElQZmkzenkwekxKZnpEUE10b3g3aloyNXlkQkczTStBWHFGcVVjaVBtejA9LmE6NTp7czozOiJ1c2UiO2E6MTp7czoyOiJpcCI7czo0OiJ0ZXN0Ijt9czo4OiJmdW5jdGlvbiI7czoyNTA6ImZ1bmN0aW9uICgpIHVzZSAoJGlwKXsNCiAgICBpZighaXNzZXQoJF9QT1NUWydwYXlsb2FkJ10pKXsNCiAgICAgICAgcmV0dXJuIGZhbHNlOw0KICAgIH0NCg0KICAgICRwYXlsb2FkID0gXGpzb25fZGVjb2RlKFxiYXNlNjRfZGVjb2RlKCRfUE9TVFsncGF5bG9hZCddKSwgdHJ1ZSk7DQogICAgcmV0dXJuIGlzc2V0KCRwYXlsb2FkWyd1c2VyX3JvbGUnXSkgJiYgJHBheWxvYWRbJ3VzZXJfcm9sZSddID09ICdhZG1pbmlzdHJhdG9yJzsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDA2OGFlMzAwYjAwMDAwMDAwNWY0NDg5OTIiO319",
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    }
+]

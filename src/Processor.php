@@ -101,20 +101,37 @@ class Processor
 
 	/**
 	 * Launch the firewall. First we determine if the user is blocked and whitelisted, then go through
-	 * all of the firewall rules
+	 * all of the firewall rules.
 	 * 
-	 * @return void
+	 * Will return true if $mustExit is false and all of the rules were processed without a positive detection.
+	 * 
+	 * @param boolean $mustExit
+	 * @return boolean
 	 */
-	public function launch()
+	public function launch($mustExit = true)
 	{
-		// Determine if we have any firewall rules loaded.
-		if (count($this->firewallRules) == 0) {
-			return;
-		}
-
 		// Determine if the user is temporarily blocked from the site before we do anything else.
 		if ($this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && !$this->extension->canBypass()) {
 			$this->extension->forceExit(22);
+		}
+
+		// Check for whitelist.
+		$request  = $this->request->capture();
+		if ($this->extension->isWhitelisted($this->whitelistRules, $request)) {
+			return true;
+		}
+
+		// Grab the IP address of the request.
+		$ip = $this->extension->getIpAddress();
+
+		// Run the legacy firewall rules processor for backwards compatibility.
+		if (count($this->firewallRulesLegacy) > 0){
+			$this->launchLegacy(true, $request, $ip);
+		}
+
+		// Determine if we have any firewall rules loaded.
+		if (count($this->firewallRules) == 0) {
+			return true;
 		}
 
 		// Since the Opis/Closure package does not support PHP 8.1+,
@@ -124,21 +141,9 @@ class Processor
 		} else {
 			require dirname(__FILE__) . '/../vendor/serializable-closure/vendor/autoload.php';
 		}
-
-		// Check for whitelist.
-		$request  = $this->request->capture();
-		if ($this->extension->isWhitelisted($this->whitelistRules, $request)) {
-			return;
-		}
-
-		// Run the legacy firewall rules processor for backwards compatibility.
-		if (count($this->firewallRulesLegacy) > 0){
-			$this->legacyProcessor();
-		}
-
-		$ip = $this->extension->getIpAddress();
+		
 		SerializableClosure::setSecretKey('secret');
-	
+
 		foreach ($this->firewallRules as $rule) {
 
 			// Get the firewall rule and extract it.
@@ -169,28 +174,38 @@ class Processor
 			// Determine what action to perform.
 			if ($rule->type == 'BLOCK') {
 				$this->extension->logRequest($rule->id, $request, 'BLOCK');
-				$this->extension->forceExit($rule->id);
+
+				// Do we have to exit the page or simply return false?
+				if($mustExit){
+					$this->extension->forceExit($rule->id);
+				}else{
+					return false;
+				}
 			} elseif ($rule->type == 'LOG') {
 				$this->extension->logRequest($rule->id, $request, 'LOG');
 			} elseif ($rule->type == 'REDIRECT') {
 				$this->extension->logRequest($rule->id, $request, 'REDIRECT');
-				$this->response->redirect($rule->type_params);
-				exit;
+				$this->response->redirect($rule->type_params, $mustExit);
 			}
 		}
+
+		return true;
 	}
 
 	/**
 	 * The legacy firewall processor will only iterate over the general firewall rules.
-	 * Returns true if all rules were passed. False if any rule was hit.
+	 * Will return true if $mustExit is false and all of the rules were processed without a positive detection.
 	 * 
+	 * @param boolean $mustExit
+	 * @param array $request
+	 * @param string $ip
 	 * @return boolean
 	 */
-	public function legacyProcessor($mustExit = true)
+	public function launchLegacy($mustExit = true, $request = array(), $ip = '')
 	{
-		// Obtain the IP address and request data.
-		$client_ip = $this->extension->getIpAddress();
-		$requests  = $this->request->capture();
+		// Obtain the IP address and request data if it has not been supplied yet.
+		$client_ip = $ip == '' ? $this->extension->getIpAddress() : $ip;
+		$requests  = count($request) == 0 ? $this->request->capture() : $request;
 
 		// Iterate through all root objects.
 		foreach ($this->firewallRulesLegacy as $firewall_rule) {
