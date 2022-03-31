@@ -6,8 +6,6 @@ use Patchstack\Response;
 use Patchstack\Request;
 use Patchstack\Extensions\ExtensionInterface;
 
-use Opis\Closure\SerializableClosure;
-
 class Processor
 {
 	/**
@@ -134,15 +132,13 @@ class Processor
 			return true;
 		}
 
-		// Since the Opis/Closure package does not support PHP 8.1+,
-		// we have to use Laravel's ported version for 8.1+.
+		// Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
+		require dirname(__FILE__) . '/../vendor/autoload.php';		
 		if (PHP_VERSION_ID < 80100) {
-			require dirname(__FILE__) . '/../vendor/closure/vendor/autoload.php';
-		} else {
-			require dirname(__FILE__) . '/../vendor/serializable-closure/vendor/autoload.php';
+			\Opis\Closure\SerializableClosure::setSecretKey('secret');
+		}else{
+			\Laravel\SerializableClosure\SerializableClosure::setSecretKey('secret');
 		}
-		
-		SerializableClosure::setSecretKey('secret');
 
 		foreach ($this->firewallRules as $rule) {
 
@@ -152,14 +148,14 @@ class Processor
 				continue;
 			}
 
-			$vpatch = unserialize($vpatch);
-			if (!$vpatch) {
-				continue;
-			}
-
 			// Execute the firewall rule.
 			$rule_hit = false;
 			try {
+				$vpatch = unserialize($vpatch);
+				if (!$vpatch) {
+					continue;
+				}
+
 				$closure = $vpatch->getClosure();
 				$rule_hit = $closure();
 			} catch (\Exception $e) {
