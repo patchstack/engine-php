@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 use Patchstack\Request;
 
@@ -11,7 +14,7 @@ final class RequestTest extends TestCase
 
     /**
      * Setup the test for testing the requesting variables.
-     * 
+     *
      * @return void
      */
     public function setUp(): void
@@ -33,8 +36,8 @@ final class RequestTest extends TestCase
     public function testRequestCaptureHeaders()
     {
         // Test for HTTP user agent.
-        foreach($this->request['rulesHeadersCombinations'] as $header){
-            if(stripos($header, 'User-Agent:') !== false){
+        foreach ($this->request['rulesHeadersCombinations'] as $header) {
+            if (stripos($header, 'User-Agent:') !== false) {
                 $this->assertTrue($header == 'User-Agent: This is a user agent');
             }
         }
@@ -46,15 +49,15 @@ final class RequestTest extends TestCase
         $this->assertTrue($this->request['method'] == 'GET');
 
         // Test for URL query parameter.
-        foreach($this->request['rulesParamsCombinations'] as $parameter){
-            if(stripos($parameter, 'something=') !== false){
+        foreach ($this->request['rulesParamsCombinations'] as $parameter) {
+            if (stripos($parameter, 'something=') !== false) {
                 $this->assertTrue($parameter == 'something=testing123');
             }
         }
 
         // Test for POST payload parameter.
-        foreach($this->request['rulesBodyCombinations'] as $parameter){
-            if(stripos($parameter, 'something=') !== false){
+        foreach ($this->request['rulesBodyCombinations'] as $parameter) {
+            if (stripos($parameter, 'something=') !== false) {
                 $this->assertTrue($parameter == 'else=foobar');
             }
         }

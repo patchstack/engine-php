@@ -8,10 +8,10 @@ class Extension implements ExtensionInterface
 {
     /**
      * Log the request, this can be of type BLOCK, LOG or REDIRECT.
-     * 
-     * @param int $ruleId
-     * @param string $bodyData
-     * @param string $blockType
+     *
+     * @param  int    $ruleId
+     * @param  string $bodyData
+     * @param  string $blockType
      * @return void
      */
     public function logRequest($ruleId, $bodyData, $blockType)
@@ -21,7 +21,7 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the current visitor can bypass the firewall.
-     * 
+     *
      * @return bool
      */
     public function canBypass()
@@ -31,10 +31,10 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the visitor is blocked from the website.
-     * 
-     * @param int $minutes
-     * @param int $blockTime
-     * @param int $attempts
+     *
+     * @param  int $minutes
+     * @param  int $blockTime
+     * @param  int $attempts
      * @return bool
      */
     public function isBlocked($minutes, $blockTime, $attempts)
@@ -44,8 +44,8 @@ class Extension implements ExtensionInterface
 
     /**
      * Force exit the page when a request has been blocked.
-     * 
-     * @param int $ruleId
+     *
+     * @param  int $ruleId
      * @return void
      */
     public function forceExit($ruleId)
@@ -55,7 +55,7 @@ class Extension implements ExtensionInterface
 
     /**
      * Get the IP address of the request.
-     * 
+     *
      * @return string
      */
     public function getIpAddress()
@@ -65,7 +65,7 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the request should not go through the firewall.
-     * 
+     *
      * @param array $whitelistRules
      * @param array $request
      */
@@ -76,7 +76,7 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the current request is a file upload request.
-     * 
+     *
      * @return boolean
      */
     public function isFileUploadRequest()

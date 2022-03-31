@@ -4,29 +4,29 @@ namespace Patchstack;
 
 class Response
 {
-	/**
-	 * The options of the engine.
-	 * 
-	 * @var array
-	 */
-	private $options;
+    /**
+     * The options of the engine.
+     *
+     * @var array
+     */
+    private $options;
 
-	/**
-	 * Creates a new request instance.
-	 * 
-	 * @param array $options
-	 * @return void
-	 */
-	public function __construct($options = array())
-	{
-		$this->options = $options;
-	}
+    /**
+     * Creates a new request instance.
+     *
+     * @param  array $options
+     * @return void
+     */
+    public function __construct($options = array())
+    {
+        $this->options = $options;
+    }
 
     /**
      * Perform a redirect if the request must be redirected to somewhere else.
-     * 
-     * @param string $redirectTo
-     * @param boolean $mustExit
+     *
+     * @param  string  $redirectTo
+     * @param  boolean $mustExit
      * @return void
      */
     public function redirect($redirectTo = '', $mustExit = true)

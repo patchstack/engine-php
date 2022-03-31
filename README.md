@@ -3,7 +3,7 @@
 This repository contains the firewall engine of Patchstack.
 It can be implemented inside of other content management systems to provide firewall functionality.
 
-## How do I get set up? ##
+## How do I get it set up? ##
 
 Since the firewall engine depends on the opis/closure and laravel/serializable-closure packages which both require different PHP versions, sticking to one PHP version is tricky.
 
@@ -15,7 +15,8 @@ Therefore, in order to use this package, the composer install command must be ex
 - ✅ First initial concept and implementation
 - ⬜️ Unit tests
 - ⬜️ Test on many different environments and combinations with other plugins
-- ⬜️ Attach PHP CS Fixer
+- ✅ Attach PHP CS ruleset
+- ⬜️ Write proper readme instructions
 
 ## Who do I talk to? ##
 
