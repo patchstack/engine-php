@@ -63,6 +63,14 @@ class Processor
     private $response;
 
     /**
+     * The secret that is used for the firewall rules integrity.
+     * Default is set to "secret" for easy PHPUnit testing.
+     *
+     * @var string
+     */
+    private $secret = 'secret';
+
+    /**
      * Creates a new processor instance.
      *
      * @param array $firewallRules
@@ -83,6 +91,8 @@ class Processor
         $this->whitelistRules = $whitelistRules;
         $this->options = array_merge($this->options, $options);
         $this->extension = $extension;
+
+        $this->secret = isset($options['secret']) ? $options['secret'] : 'secret';
         $this->request = new Request($this->options);
         $this->response = new Response($this->options);
     }
@@ -135,9 +145,9 @@ class Processor
         // Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
         require dirname(__FILE__) . '/../vendor/autoload.php';
         if (PHP_VERSION_ID < 80100) {
-            \Opis\Closure\SerializableClosure::setSecretKey('secret');
+            \Opis\Closure\SerializableClosure::setSecretKey($this->secret);
         } else {
-            \Laravel\SerializableClosure\SerializableClosure::setSecretKey('secret');
+            \Laravel\SerializableClosure\SerializableClosure::setSecretKey($this->secret);
         }
 
         foreach ($this->firewallRules as $rule) {
