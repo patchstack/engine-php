@@ -37,11 +37,8 @@ final class FirewallTest extends TestCase
     private function setUpFirewallProcessor(array $rules)
     {
         $this->processor = new Processor(
-            $rules,
-            [],
-            [],
-            [],
-            new Extension()
+            new Extension(),
+            $rules
         );
     }
 
@@ -97,5 +94,6 @@ final class FirewallTest extends TestCase
             ]]
         );
         $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
     }
 }

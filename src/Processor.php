@@ -30,6 +30,13 @@ class Processor
     private $whitelistRules = array();
 
     /**
+     * Firewall datasets which can be interacted with by the firewall rules.
+     *
+     * @var array
+     */
+    private $dataset = array();
+
+    /**
      * The options of the engine.
      *
      * @var array
@@ -73,24 +80,26 @@ class Processor
     /**
      * Creates a new processor instance.
      *
+     * @param ExtensionInterface $extension
      * @param array $firewallRules
      * @param array $firewallRulesLegacy
      * @param array $whitelistRules
      * @param array $options
-     * @param ExtensionInterface $extension
      */
     public function __construct(
-        $firewallRules,
-        $firewallRulesLegacy,
-        $whitelistRules,
-        $options,
-        ExtensionInterface $extension
+        ExtensionInterface $extension,
+        $firewallRules = array(),
+        $firewallRulesLegacy = array(),
+        $whitelistRules = array(),
+        $options = array(),
+        $datasets = array()
     ) {
+        $this->extension = $extension;
         $this->firewallRules = $firewallRules;
         $this->firewallRulesLegacy = $firewallRulesLegacy;
         $this->whitelistRules = $whitelistRules;
         $this->options = array_merge($this->options, $options);
-        $this->extension = $extension;
+        $this->dataset = $datasets;
 
         $this->secret = isset($options['secret']) ? $options['secret'] : 'secret';
         $this->request = new Request($this->options);
@@ -150,6 +159,8 @@ class Processor
             \Laravel\SerializableClosure\SerializableClosure::setSecretKey($this->secret);
         }
 
+        // Store the datasets in a shorter variable for easy access.
+        $dataset = $this->dataset;
         foreach ($this->firewallRules as $rule) {
             // Get the firewall rule and extract it.
             $vpatch = base64_decode($rule->rule);

@@ -37,11 +37,9 @@ final class FirewallLegacyTest extends TestCase
     private function setUpFirewallProcessor(array $rules)
     {
         $this->processor = new Processor(
+            new Extension(),
             [],
-            $rules,
-            [],
-            [],
-            new Extension()
+            $rules
         );
     }
 

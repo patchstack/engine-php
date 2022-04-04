@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Patchstack\Processor;
 use Patchstack\Extensions\Test\Extension;
 
-final class FirewallRuleCreationTest extends TestCase
+final class FirewallDatasetTest extends TestCase
 {
     /**
      * @var Processor
@@ -19,13 +19,18 @@ final class FirewallRuleCreationTest extends TestCase
     protected $rules;
 
     /**
+     * @var array
+     */
+    protected $datasets;
+
+    /**
      * Setup the test for testing the header location redirect.
      *
      * @return void
      */
     protected function setUp(): void
     {
-        $this->rules = json_decode(file_get_contents(dirname(__FILE__) . '/data/Rules.json'));
+        $this->datasets = json_decode(file_get_contents(dirname(__FILE__) . '/data/Datasets.json'), true);
     }
 
     /**
@@ -38,7 +43,11 @@ final class FirewallRuleCreationTest extends TestCase
     {
         $this->processor = new Processor(
             new Extension(),
-            $rules
+            $rules,
+            [],
+            [],
+            [],
+            $this->datasets
         );
     }
 
@@ -59,28 +68,53 @@ final class FirewallRuleCreationTest extends TestCase
     }
 
     /**
-     * Test the creation of firewall rules.
+     * Test specific firewall rules.
      *
      * @return void
      */
-    public function testFirewallRuleCreation()
+    public function testRules()
     {
         // Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
         require dirname(__FILE__) . '/../vendor/autoload.php';
         if (PHP_VERSION_ID < 80100) {
             \Opis\Closure\SerializableClosure::setSecretKey('secret');
+            class_alias('\Opis\Closure\SerializableClosure', 'SerializeClosure');
         } else {
             \Laravel\SerializableClosure\SerializableClosure::setSecretKey('secret');
+            class_alias('\Laravel\SerializableClosure\SerializableClosure', 'SerializeClosure');
         }
 
+        // For easier access we store the datasets inside of $datasets as it will function
+        // like this in the firewall rule processor as well.
+        $datasets = $this->datasets;
+
         // Create the firewall rule.
-        $function = function () {
-            return isset($_GET['test']);
+        $function = function () use ($datasets) {
+            return in_array($_SERVER['REMOTE_ADDR'], $datasets['ps_ips']);
         };
         $wrapper = new SerializeClosure($function);
         $rule = (object) [
             'id' => 1,
-            'title' => 'Block request with test query parameter in the URL.',
+            'title' => 'Determine if IP is in blacklist',
+            'rule' => base64_encode(serialize($wrapper)),
+            'cat' => 'TEST',
+            'type' => 'BLOCK'
+        ];
+
+        // Test the rule.
+        $_SERVER['REMOTE_ADDR'] = '1.1.1.1';
+        $this->setUpFirewallProcessor([$rule]);
+        $this->assertFalse($this->processor->launch(false));
+        $_SERVER['REMOTE_ADDR'] = '';
+
+        // Create the firewall rule.
+        $function = function () use ($datasets) {
+            return preg_match($datasets['ps_sqli'], $_GET['id']) === 1;
+        };
+        $wrapper = new SerializeClosure($function);
+        $rule = (object) [
+            'id' => 1,
+            'title' => 'Determine if union all select regex is a hit in the id GET parameter',
             'rule' => base64_encode(serialize($wrapper)),
             'cat' => 'TEST',
             'type' => 'BLOCK'
@@ -90,34 +124,7 @@ final class FirewallRuleCreationTest extends TestCase
         $this->setUpFirewallProcessor([$rule]);
         $this->alterPayload(
             ['GET' => [
-            'test' => 'yes'
-            ]]
-        );
-        $this->assertFalse($this->processor->launch(false));
-
-        // Create the more complex firewall rule.
-        $function = function () {
-            if (!isset($_POST['exec'])) {
-                return false;
-            }
-
-            $payload = json_decode(base64_decode($_POST['exec']), true);
-            return $payload && isset($payload['user_role']) && $payload['user_role'] == 'administrator';
-        };
-        $wrapper = new SerializeClosure($function);
-        $rule = (object) [
-            'id' => 1,
-            'title' => 'Block request with encoded payload',
-            'rule' => base64_encode(serialize($wrapper)),
-            'cat' => 'TEST',
-            'type' => 'BLOCK'
-        ];
-
-        // Test the rule.
-        $this->setUpFirewallProcessor([$rule]);
-        $this->alterPayload(
-            ['POST' => [
-            'exec' => base64_encode(json_encode(['user_role' => 'administrator']))
+            'id' => '1 UNION ALL SELECT 1,2,3,4,5,@@version-- '
             ]]
         );
         $this->assertFalse($this->processor->launch(false));
