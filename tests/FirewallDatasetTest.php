@@ -46,7 +46,6 @@ final class FirewallDatasetTest extends TestCase
             $rules,
             [],
             [],
-            [],
             $this->datasets
         );
     }

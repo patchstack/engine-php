@@ -39,6 +39,9 @@ final class FirewallLegacyTest extends TestCase
         $this->processor = new Processor(
             new Extension(),
             [],
+            [],
+            [],
+            [],
             $rules
         );
     }

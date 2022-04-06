@@ -30,6 +30,13 @@ class Processor
     private $whitelistRules = array();
 
     /**
+     * The legacy whitelist rules to process.
+     *
+     * @var array
+     */
+    private $whitelistRulesLegacy = array();
+
+    /**
      * Firewall datasets which can be interacted with by the firewall rules.
      *
      * @var array
@@ -82,24 +89,29 @@ class Processor
      *
      * @param ExtensionInterface $extension
      * @param array $firewallRules
-     * @param array $firewallRulesLegacy
      * @param array $whitelistRules
      * @param array $options
+     * @param array $datasets
+     * @param array $firewallRulesLegacy
+     * @param array $whitelistRulesLegacy
+     * @return void
      */
     public function __construct(
         ExtensionInterface $extension,
         $firewallRules = array(),
-        $firewallRulesLegacy = array(),
         $whitelistRules = array(),
         $options = array(),
-        $datasets = array()
+        $datasets = array(),
+        $firewallRulesLegacy = array(),
+        $whitelistRulesLegacy = array()
     ) {
         $this->extension = $extension;
         $this->firewallRules = $firewallRules;
-        $this->firewallRulesLegacy = $firewallRulesLegacy;
         $this->whitelistRules = $whitelistRules;
         $this->options = array_merge($this->options, $options);
         $this->dataset = $datasets;
+        $this->firewallRulesLegacy = $firewallRulesLegacy;
+        $this->whitelistRulesLegacy = $whitelistRulesLegacy;
 
         $this->secret = isset($options['secret']) ? $options['secret'] : 'secret';
         $this->request = new Request($this->options);
@@ -109,6 +121,7 @@ class Processor
     /**
      * Magic getter for the options.
      *
+     * @param string $name
      * @return mixed
      */
     public function __get($name)
@@ -132,22 +145,14 @@ class Processor
             $this->extension->forceExit(22);
         }
 
-        // Check for whitelist.
+        // Check for whitelist based on the legacy whitelist rules.
         $request  = $this->request->capture();
-        if ($this->extension->isWhitelisted($this->whitelistRules, $request)) {
+        if ($this->extension->isWhitelisted($this->whitelistRulesLegacy, $request)) {
             return true;
         }
 
-        // Grab the IP address of the request.
-        $ip = $this->extension->getIpAddress();
-
-        // Run the legacy firewall rules processor for backwards compatibility.
-        if (count($this->firewallRulesLegacy) > 0) {
-            $this->launchLegacy(true, $request, $ip);
-        }
-
-        // Determine if we have any firewall rules loaded.
-        if (count($this->firewallRules) == 0) {
+        // Determine if we have any firewall and/or whitelist rules loaded.
+        if (count($this->firewallRules) == 0 && count($this->whitelistRules) == 0) {
             return true;
         }
 
@@ -159,9 +164,15 @@ class Processor
             \Laravel\SerializableClosure\SerializableClosure::setSecretKey($this->secret);
         }
 
+        // Grab the IP address of the request.
+        $ip = $this->extension->getIpAddress();
+
         // Store the datasets in a shorter variable for easy access.
         $dataset = $this->dataset;
-        foreach ($this->firewallRules as $rule) {
+
+        // Merge the rules together. First iterate through the whitelist rules.
+        $rules = array_merge($this->whitelistRules, $this->firewallRules);
+        foreach ($rules as $rule) {
             // Get the firewall rule and extract it.
             $vpatch = base64_decode($rule->rule);
             if (!$vpatch) {
@@ -202,7 +213,14 @@ class Processor
             } elseif ($rule->type == 'REDIRECT') {
                 $this->extension->logRequest($rule->id, $request, 'REDIRECT');
                 $this->response->redirect($rule->type_params, $mustExit);
+            } elseif ($rule->type == 'WHITELIST') {
+                return $mustExit;
             }
+        }
+
+        // Run the legacy firewall rules processor for backwards compatibility.
+        if (count($this->firewallRulesLegacy) > 0) {
+            $this->launchLegacy(true, $request, $ip);
         }
 
         return true;
@@ -222,6 +240,26 @@ class Processor
         // Obtain the IP address and request data if it has not been supplied yet.
         $client_ip = $ip == '' ? $this->extension->getIpAddress() : $ip;
         $requests  = count($request) == 0 ? $this->request->capture() : $request;
+
+        // The request parameter values exploded into pairs.
+        $requestParams = array(
+            'method' => 'method',
+            'rulesFile' => 'rules->file',
+            'rulesRawPost' => 'rules->raw->post',
+            'rulesUri' => 'rules->uri',
+            'rulesHeadersAll' => 'rules->headers->all',
+            'rulesHeadersKeys' => 'rules->headers->keys',
+            'rulesHeadersValues' => 'rules->headers->values',
+            'rulesHeadersCombinations' => 'rules->headers->combinations',
+            'rulesBodyAll' => 'rules->body->all',
+            'rulesBodyKeys' => 'rules->body->keys',
+            'rulesBodyValues' => 'rules->body->values',
+            'rulesBodyCombinations' => 'rules->body->combinations',
+            'rulesParamsAll' => 'rules->params->all',
+            'rulesParamsKeys' => 'rules->params->keys',
+            'rulesParamsValues' => 'rules->params->values',
+            'rulesParamsCombinations' => 'rules->params->combinations'
+        );
 
         // Iterate through all root objects.
         foreach ($this->firewallRulesLegacy as $firewall_rule) {
@@ -255,8 +293,10 @@ class Processor
 
                 // Determine if the requesting method matches.
                 if ($rule_terms->method == $requests['method'] || $rule_terms->method == 'ALL' || $rule_terms->method == 'GET' || ($rule_terms->method == 'FILES' && $this->extension->isFileUploadRequest())) {
-                    $test = strtolower(preg_replace('/(?!^)[A-Z]{2,}(?=[A-Z][a-z])|[A-Z][a-z]/', '->$0', $key));
-                    $exp  = explode('->', $test);
+                    if (!isset($requestParams[$key])) {
+                        continue;
+                    }
+                    $exp  = explode('->', $requestParams[$key]);
 
                     // Determine if a rule exists for this request.
                     $rule = $rule_terms;
@@ -296,7 +336,7 @@ class Processor
     /**
      * Determine if the request matches the given firewall or whitelist rule.
      *
-     * @param string       $rule
+     * @param string $rule
      * @param string|array $request
      * @return bool
      */

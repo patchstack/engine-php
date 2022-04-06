@@ -12,8 +12,32 @@ class Extension implements ExtensionInterface
      * @var array
      */
     public $options = array(
-    'patchstack_basic_firewall_roles' => array('administrator', 'editor', 'author'),
-    'patchstack_custom_whitelist_rules' => ''
+        'patchstack_basic_firewall_roles' => array('administrator', 'editor', 'author'),
+        'patchstack_custom_whitelist_rules' => ''
+    );
+
+    /**
+     * The request parameter values exploded into pairs.
+     *
+     * @var array
+     */
+    private $requestParams = array(
+        'method' => 'method',
+        'rulesFile' => 'rules->file',
+        'rulesRawPost' => 'rules->raw->post',
+        'rulesUri' => 'rules->uri',
+        'rulesHeadersAll' => 'rules->headers->all',
+        'rulesHeadersKeys' => 'rules->headers->keys',
+        'rulesHeadersValues' => 'rules->headers->values',
+        'rulesHeadersCombinations' => 'rules->headers->combinations',
+        'rulesBodyAll' => 'rules->body->all',
+        'rulesBodyKeys' => 'rules->body->keys',
+        'rulesBodyValues' => 'rules->body->values',
+        'rulesBodyCombinations' => 'rules->body->combinations',
+        'rulesParamsAll' => 'rules->params->all',
+        'rulesParamsKeys' => 'rules->params->keys',
+        'rulesParamsValues' => 'rules->params->values',
+        'rulesParamsCombinations' => 'rules->params->combinations'
     );
 
     /**
@@ -194,14 +218,12 @@ class Extension implements ExtensionInterface
             if (count($t) == 2) {
                 $val = strtolower(trim($t[1]));
                 switch (strtolower($t[0])) {
-                  // IP address match.
-                    case 'ip':
+                    case 'ip': // IP address match.
                         if ($ip == $val) {
                             return true;
                         }
                         break;
-                  // Payload match.
-                    case 'payload':
+                    case 'payload': // Payload match.
                         if (count($_POST) > 0 && strpos(strtolower(print_r($_POST, true)), $val) !== false) {
                             return true;
                         }
@@ -210,8 +232,7 @@ class Extension implements ExtensionInterface
                             return true;
                         }
                         break;
-                        // URL match.
-                    case 'url':
+                    case 'url': // URL match.
                         if (strpos(strtolower($_SERVER['REQUEST_URI']), $val) !== false) {
                             return true;
                         }
@@ -225,6 +246,10 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the request is whitelisted.
+     *
+     * @param array $whitelistRules
+     * @param array $request
+     * @return boolean
      */
     public function isWhitelisted($whitelistRules, $request)
     {
@@ -239,28 +264,28 @@ class Extension implements ExtensionInterface
         }
 
         // Grab visitor's IP address and request data.
-        $client_ip = $this->getIpAddress();
+        $clientIp = $this->getIpAddress();
         $requests  = $request;
 
         foreach ($whitelistRules as $whitelist) {
-            $whitelist_rule = json_decode($whitelist['rule']);
+            $whitelistRule = json_decode($whitelist['rule']);
 
             // If an IP address match is given, determine if it matches.
-            $ip = isset($whitelist_rule->rules, $whitelist_rule->rules->ip_address) ? $whitelist_rule->rules->ip_address : null;
+            $ip = isset($whitelistRule->rules, $whitelistRule->rules->ip_address) ? $whitelistRule->rules->ip_address : null;
             if (!is_null($ip)) {
                 if (strpos($ip, '*') !== false) {
-                    $whitelisted_ip = $this->plugin->ban->check_wildcard_rule($client_ip, $ip);
+                    $isWhitelistedIp = $this->plugin->ban->check_wildcard_rule($clientIp, $ip);
                 } elseif (strpos($ip, '-') !== false) {
-                    $whitelisted_ip = $this->plugin->ban->check_range_rule($client_ip, $ip);
+                    $isWhitelistedIp = $this->plugin->ban->check_range_rule($clientIp, $ip);
                 } elseif (strpos($ip, '/') !== false) {
-                    $whitelisted_ip = $this->plugin->ban->check_subnet_mask_rule($client_ip, $ip);
-                } elseif ($client_ip == $ip) {
-                    $whitelisted_ip = true;
+                    $isWhitelistedIp = $this->plugin->ban->check_subnet_mask_rule($clientIp, $ip);
+                } elseif ($clientIp == $ip) {
+                    $isWhitelistedIp = true;
                 } else {
-                    $whitelisted_ip = false;
+                    $isWhitelistedIp = false;
                 }
             } else {
-                $whitelisted_ip = true;
+                $isWhitelistedIp = true;
             }
 
             foreach ($requests as $key => $request) {
@@ -269,21 +294,20 @@ class Extension implements ExtensionInterface
                     $key = 'rulesBodyAll';
                 }
 
-                if ($whitelist_rule->method == $requests['method'] || $whitelist_rule->method == 'ALL') {
-                    $test = strtolower(preg_replace('/(?!^)[A-Z]{2,}(?=[A-Z][a-z])|[A-Z][a-z]/', '->$0', $key));
-                    $exp = explode('->', $test);
+                if (isset($this->requestParams[$key]) && ($whitelistRule->method == $requests['method'] || $whitelistRule->method == 'ALL')) {
+                    $exp = explode('->', $this->requestParams[$key]);
 
                     // Determine if a rule exists for this request.
-                    $rule = $whitelist_rule;
+                    $rule = $whitelistRule;
                     foreach ($exp as $var) {
                         if (!isset($rule->$var)) {
-                               $rule = null;
-                               continue;
+                            $rule = null;
+                            continue;
                         }
                         $rule = $rule->$var;
                     }
 
-                    if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request) && $whitelisted_ip) {
+                    if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request) && $isWhitelistedIp) {
                         return true;
                     }
                 }
