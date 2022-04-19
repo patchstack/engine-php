@@ -68,9 +68,9 @@ final class FirewallRuleCreationTest extends TestCase
         // Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
         require dirname(__FILE__) . '/../vendor/autoload.php';
         if (PHP_VERSION_ID < 80100) {
-            \Opis\Closure\SerializableClosure::setSecretKey('secret');
+            \Opis\Closure\SerializableClosure::setSecretKey('be298ce20996fbe66657d6b1ba4412fae11b3594');
         } else {
-            \Laravel\SerializableClosure\SerializableClosure::setSecretKey('secret');
+            \Laravel\SerializableClosure\SerializableClosure::setSecretKey('be298ce20996fbe66657d6b1ba4412fae11b3594');
         }
 
         // Create the firewall rule.
@@ -81,7 +81,9 @@ final class FirewallRuleCreationTest extends TestCase
         $rule = (object) [
             'id' => 1,
             'title' => 'Block request with test query parameter in the URL.',
-            'rule' => base64_encode(serialize($wrapper)),
+            'rule_closure' => (object) [
+                'opis' => base64_encode(serialize($wrapper))
+            ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
         ];
@@ -108,7 +110,9 @@ final class FirewallRuleCreationTest extends TestCase
         $rule = (object) [
             'id' => 1,
             'title' => 'Block request with encoded payload',
-            'rule' => base64_encode(serialize($wrapper)),
+            'rule_closure' => (object) [
+                'opis' => base64_encode(serialize($wrapper))
+            ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
         ];

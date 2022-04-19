@@ -160,8 +160,10 @@ class Processor
         require dirname(__FILE__) . '/../vendor/autoload.php';
         if (PHP_VERSION_ID < 80100) {
             \Opis\Closure\SerializableClosure::setSecretKey($this->secret);
+            $type = 'opis';
         } else {
             \Laravel\SerializableClosure\SerializableClosure::setSecretKey($this->secret);
+            $type = 'laravel';
         }
 
         // Grab the IP address of the request.
@@ -174,7 +176,7 @@ class Processor
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
         foreach ($rules as $rule) {
             // Get the firewall rule and extract it.
-            $vpatch = base64_decode($rule->rule);
+            $vpatch = base64_decode($rule->rule_closure->{$type});
             if (!$vpatch) {
                 continue;
             }
@@ -188,7 +190,7 @@ class Processor
                 }
 
                 $closure = $vpatch->getClosure();
-                $rule_hit = $closure();
+                $rule_hit = $closure($ip, $dataset, $request);
             } catch (\Exception $e) {
                 continue;
             }

@@ -76,10 +76,10 @@ final class FirewallDatasetTest extends TestCase
         // Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
         require dirname(__FILE__) . '/../vendor/autoload.php';
         if (PHP_VERSION_ID < 80100) {
-            \Opis\Closure\SerializableClosure::setSecretKey('secret');
+            \Opis\Closure\SerializableClosure::setSecretKey('be298ce20996fbe66657d6b1ba4412fae11b3594');
             class_alias('\Opis\Closure\SerializableClosure', 'SerializeClosure');
         } else {
-            \Laravel\SerializableClosure\SerializableClosure::setSecretKey('secret');
+            \Laravel\SerializableClosure\SerializableClosure::setSecretKey('be298ce20996fbe66657d6b1ba4412fae11b3594');
             class_alias('\Laravel\SerializableClosure\SerializableClosure', 'SerializeClosure');
         }
 
@@ -95,7 +95,9 @@ final class FirewallDatasetTest extends TestCase
         $rule = (object) [
             'id' => 1,
             'title' => 'Determine if IP is in blacklist',
-            'rule' => base64_encode(serialize($wrapper)),
+            'rule_closure' => (object) [
+                'opis' => base64_encode(serialize($wrapper))
+            ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
         ];
@@ -114,7 +116,9 @@ final class FirewallDatasetTest extends TestCase
         $rule = (object) [
             'id' => 1,
             'title' => 'Determine if union all select regex is a hit in the id GET parameter',
-            'rule' => base64_encode(serialize($wrapper)),
+            'rule_closure' => (object) [
+                'opis' => base64_encode(serialize($wrapper))
+            ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
         ];
