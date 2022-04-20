@@ -45,7 +45,9 @@ final class FirewallDatasetTest extends TestCase
             new Extension(),
             $rules,
             [],
-            [],
+            [
+                'secret' => 'be298ce20996fbe66657d6b1ba4412fae11b3594'
+            ],
             $this->datasets
         );
     }
@@ -96,7 +98,8 @@ final class FirewallDatasetTest extends TestCase
             'id' => 1,
             'title' => 'Determine if IP is in blacklist',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper))
+                'opis' => base64_encode(serialize($wrapper)),
+                'laravel' => base64_encode(serialize($wrapper))
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
@@ -117,7 +120,8 @@ final class FirewallDatasetTest extends TestCase
             'id' => 1,
             'title' => 'Determine if union all select regex is a hit in the id GET parameter',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper))
+                'opis' => base64_encode(serialize($wrapper)),
+                'laravel' => base64_encode(serialize($wrapper))
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'

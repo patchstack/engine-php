@@ -38,7 +38,11 @@ final class FirewallRuleCreationTest extends TestCase
     {
         $this->processor = new Processor(
             new Extension(),
-            $rules
+            $rules,
+            [],
+            [
+                'secret' => 'be298ce20996fbe66657d6b1ba4412fae11b3594'
+            ]
         );
     }
 
@@ -82,7 +86,8 @@ final class FirewallRuleCreationTest extends TestCase
             'id' => 1,
             'title' => 'Block request with test query parameter in the URL.',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper))
+                'opis' => base64_encode(serialize($wrapper)),
+                'laravel' => base64_encode(serialize($wrapper))
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
@@ -111,7 +116,8 @@ final class FirewallRuleCreationTest extends TestCase
             'id' => 1,
             'title' => 'Block request with encoded payload',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper))
+                'opis' => base64_encode(serialize($wrapper)),
+                'laravel' => base64_encode(serialize($wrapper))
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
