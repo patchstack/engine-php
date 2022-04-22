@@ -13,9 +13,9 @@ Therefore, in order to use this package, the composer install command must be ex
 
 ## To-Do List ##
 - ✅ First initial concept and implementation
-- ⬜️ Unit tests
-- ⬜️ Test on many different environments and combinations with other plugins
+- ✅ Unit tests
 - ✅ Attach PHP CS ruleset
+- ⬜️ Test on many different environments and combinations with other plugins
 - ⬜️ Write proper readme instructions
 
 ## Who do I talk to? ##
