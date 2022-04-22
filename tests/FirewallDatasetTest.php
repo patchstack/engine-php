@@ -94,12 +94,13 @@ final class FirewallDatasetTest extends TestCase
             return in_array($_SERVER['REMOTE_ADDR'], $datasets['ps_ips']);
         };
         $wrapper = new SerializeClosure($function);
+        $serialized = base64_encode(serialize($wrapper));
         $rule = (object) [
             'id' => 1,
             'title' => 'Determine if IP is in blacklist',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper)),
-                'laravel' => base64_encode(serialize($wrapper))
+                'opis' => $serialized,
+                'laravel' => $serialized
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'
@@ -116,12 +117,13 @@ final class FirewallDatasetTest extends TestCase
             return preg_match($datasets['ps_sqli'], $_GET['id']) === 1;
         };
         $wrapper = new SerializeClosure($function);
+        $serialized = base64_encode(serialize($wrapper));
         $rule = (object) [
             'id' => 1,
             'title' => 'Determine if union all select regex is a hit in the id GET parameter',
             'rule_closure' => (object) [
-                'opis' => base64_encode(serialize($wrapper)),
-                'laravel' => base64_encode(serialize($wrapper))
+                'opis' => $serialized,
+                'laravel' => $serialized
             ],
             'cat' => 'TEST',
             'type' => 'BLOCK'

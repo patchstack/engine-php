@@ -27,7 +27,6 @@ final class WhitelistTest extends TestCase
     {
         $this->rules = json_decode(file_get_contents(dirname(__FILE__) . '/data/Rules.json'));
         $this->whitelist = json_decode(file_get_contents(dirname(__FILE__) . '/data/Whitelist.json'));
-
         $this->processor = new Processor(
             new Extension(),
             $this->rules,
