@@ -41,7 +41,6 @@ final class FirewallLegacyTest extends TestCase
             [],
             [],
             [],
-            [],
             $rules
         );
     }

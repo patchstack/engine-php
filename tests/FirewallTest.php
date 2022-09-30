@@ -39,10 +39,7 @@ final class FirewallTest extends TestCase
         $this->processor = new Processor(
             new Extension(),
             $rules,
-            [],
-            [
-                'secret' => 'be298ce20996fbe66657d6b1ba4412fae11b3594'
-            ]
+            []
         );
     }
 

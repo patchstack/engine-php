@@ -2,10 +2,7 @@
     {
         "id":1,
         "title":"Block test parameter being present in the URL",
-        "rule_closure": {
-            "opis": "QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjI0Mjp7QG8rb3UwQkYvUVhOOTVIQldTYWpiS2dBVjI0cXdnYlJldHhMZ04vZ0dWVnc9LmE6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6NzM6ImZ1bmN0aW9uICgkaXAsICRkYXRhc2V0LCAkcmVxdWVzdCkgew0KICAgIHJldHVybiBpc3NldCgkX0dFVFsndGVzdCddKTsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDAwOGMyMDU5YjAwMDAwMDAwNWRmZTZlZDAiO319",
-            "laravel": "Tzo0NzoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjE6e3M6MTI6InNlcmlhbGl6YWJsZSI7Tzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXFNpZ25lZCI6Mjp7czoxMjoic2VyaWFsaXphYmxlIjtzOjI0ODoiTzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXE5hdGl2ZSI6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6NzM6ImZ1bmN0aW9uICgkaXAsICRkYXRhc2V0LCAkcmVxdWVzdCkgew0KICAgIHJldHVybiBpc3NldCgkX0dFVFsndGVzdCddKTsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDAwOGMyMDU5YjAwMDAwMDAwNWRmZTZlZDAiO30iO3M6NDoiaGFzaCI7czo0NDoiOUJ0NHFaQXZ5U3kvaVhJNzlyaWtZbms0N0VObHZvZEpGMWVOS2Z5V3lmVT0iO319"
-        },
+        "rules":{"get.test":{"match":{"type":"isset"}}},
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
@@ -13,10 +10,7 @@
     {
         "id":2,
         "title":"Block backdoor parameter in payload set to mybackdoor and user agent containing some_backdoor_agent.",
-        "rule_closure": {
-            "opis": "QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjM2MDp7QHN2aDRPUzFTS0Rja1MrK3dYSldTRUNkeVY1dW1jdk9mRG1MOVBhN1AzOUU9LmE6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTkwOiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gaXNzZXQoJF9QT1NUWydiYWNrZG9vciddKSAmJiAkX1BPU1RbJ2JhY2tkb29yJ10gPT0gJ215YmFja2Rvb3InICYmIFxzdHJpcG9zKCRfU0VSVkVSWydIVFRQX1VTRVJfQUdFTlQnXSwgJ3NvbWVfYmFja2Rvb3JfYWdlbnQnKSAhPT0gZmFsc2U7DQp9IjtzOjU6InNjb3BlIjtOO3M6NDoidGhpcyI7TjtzOjQ6InNlbGYiO3M6MzI6IjAwMDAwMDAwMGE0MzRhZDAwMDAwMDAwMDI1N2E3NzhhIjt9fQ==",
-            "laravel": "Tzo0NzoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjE6e3M6MTI6InNlcmlhbGl6YWJsZSI7Tzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXFNpZ25lZCI6Mjp7czoxMjoic2VyaWFsaXphYmxlIjtzOjM2NjoiTzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXE5hdGl2ZSI6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTkwOiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gaXNzZXQoJF9QT1NUWydiYWNrZG9vciddKSAmJiAkX1BPU1RbJ2JhY2tkb29yJ10gPT0gJ215YmFja2Rvb3InICYmIFxzdHJpcG9zKCRfU0VSVkVSWydIVFRQX1VTRVJfQUdFTlQnXSwgJ3NvbWVfYmFja2Rvb3JfYWdlbnQnKSAhPT0gZmFsc2U7DQp9IjtzOjU6InNjb3BlIjtOO3M6NDoidGhpcyI7TjtzOjQ6InNlbGYiO3M6MzI6IjAwMDAwMDAwMGE0MzRhZDAwMDAwMDAwMDI1N2E3NzhhIjt9IjtzOjQ6Imhhc2giO3M6NDQ6ImhjOEZ4VWx3cm5SK2FPZnlpNE1qVFJCTUphaVBtN2JsM29ZRzJqc05hYVE9Ijt9fQ=="
-        },
+        "rules":{"post.backdoor":{"match":{"type":"equals","value":"mybackdoor"},"inclusive":true},"server.HTTP_USER_AGENT":{"match":{"type":"contains","value":"some_backdoor_agent"},"inclusive":true}},
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
@@ -24,10 +18,7 @@
     {
         "id":3,
         "title":"Block a base64 json encoded request with the user_role parameter set to administrator",
-        "rule_closure": {
-            "opis": "QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjQwODp7QForMEVxSlYxMTFOd1pEZFpYbmx5bk9yeEMwWC9XNm5YVlBWRklJWWhxRmM9LmE6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MjM4OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICBpZighaXNzZXQoJF9QT1NUWydwYXlsb2FkJ10pKXsgcmV0dXJuIGZhbHNlOyB9CiRwYXlsb2FkID0gXGpzb25fZGVjb2RlKFxiYXNlNjRfZGVjb2RlKCRfUE9TVFsncGF5bG9hZCddKSwgdHJ1ZSk7CnJldHVybiBpc3NldCgkcGF5bG9hZFsndXNlcl9yb2xlJ10pICYmICRwYXlsb2FkWyd1c2VyX3JvbGUnXSA9PSAnYWRtaW5pc3RyYXRvcic7DQp9IjtzOjU6InNjb3BlIjtOO3M6NDoidGhpcyI7TjtzOjQ6InNlbGYiO3M6MzI6IjAwMDAwMDAwMjQwOTUzMDkwMDAwMDAwMDc1NDQwYjJlIjt9fQ==",
-            "laravel": "Tzo0NzoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjE6e3M6MTI6InNlcmlhbGl6YWJsZSI7Tzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXFNpZ25lZCI6Mjp7czoxMjoic2VyaWFsaXphYmxlIjtzOjQxNDoiTzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXE5hdGl2ZSI6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MjM4OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICBpZighaXNzZXQoJF9QT1NUWydwYXlsb2FkJ10pKXsgcmV0dXJuIGZhbHNlOyB9CiRwYXlsb2FkID0gXGpzb25fZGVjb2RlKFxiYXNlNjRfZGVjb2RlKCRfUE9TVFsncGF5bG9hZCddKSwgdHJ1ZSk7CnJldHVybiBpc3NldCgkcGF5bG9hZFsndXNlcl9yb2xlJ10pICYmICRwYXlsb2FkWyd1c2VyX3JvbGUnXSA9PSAnYWRtaW5pc3RyYXRvcic7DQp9IjtzOjU6InNjb3BlIjtOO3M6NDoidGhpcyI7TjtzOjQ6InNlbGYiO3M6MzI6IjAwMDAwMDAwMjQwOTUzMDkwMDAwMDAwMDc1NDQwYjJlIjt9IjtzOjQ6Imhhc2giO3M6NDQ6ImFtcVYvcjBhblFUb0tKMFcvNW42cU1WRUU1VWhSZDc1L3pRczZRU0ZLbTg9Ijt9fQ=="
-        },
+        "rules":{"post.payload":{"mutations":["base64_decode","json_decode"],"match":{"type":"array_key_value","key":"user_role","match":{"type":"equals","value":"administrator"}}}},
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null

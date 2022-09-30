@@ -27,13 +27,20 @@ final class WhitelistTest extends TestCase
     {
         $this->rules = json_decode(file_get_contents(dirname(__FILE__) . '/data/Rules.json'));
         $this->whitelist = json_decode(file_get_contents(dirname(__FILE__) . '/data/Whitelist.json'));
+    }
+
+    /**
+     * Setup the firewall processor.
+     *
+     * @param  array $rules
+     * @return void
+     */
+    private function setUpFirewallProcessor(array $whitelistRules)
+    {
         $this->processor = new Processor(
             new Extension(),
             $this->rules,
-            $this->whitelist,
-            [
-                'secret' => 'be298ce20996fbe66657d6b1ba4412fae11b3594'
-            ]
+            $whitelistRules
         );
     }
 
@@ -60,14 +67,10 @@ final class WhitelistTest extends TestCase
      */
     public function testRules()
     {
-        // Whitelist IP 1.2.3.4 or 5.5.5.5
-        $_SERVER['REMOTE_ADDR'] = '1.2.3.4';
+        // Whitelist IP 127.0.0.1
         $this->alterPayload();
+        $this->setUpFirewallProcessor([$this->whitelist[0]]);
         $this->assertFalse($this->processor->launch(false));
-        $_SERVER['REMOTE_ADDR'] = '';
-
-        // This should be a true response, no firewall or whitelist rules should be hit.
-        $this->assertTrue($this->processor->launch(false));
 
         // Whitelist if POST request action parameter is set to wp_heartbeat
         $this->alterPayload(
@@ -75,6 +78,7 @@ final class WhitelistTest extends TestCase
             'action' => 'wp_heartbeat'
             ]]
         );
+        $this->setUpFirewallProcessor([$this->whitelist[1]]);
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
     }

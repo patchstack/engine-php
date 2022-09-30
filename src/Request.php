@@ -36,9 +36,9 @@ class Request
         $rulesUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
 
         // Store the header values in different formats.
-        $rulesHeadersKeys         = array();
-        $rulesHeadersValues       = array();
-        $rulesHeadersCombinations = array();
+        $rulesHeadersKeys         = [];
+        $rulesHeadersValues       = [];
+        $rulesHeadersCombinations = [];
 
         // Retrieve the headers.
         $headers         = self::getHeaders();
@@ -50,9 +50,9 @@ class Request
         }
 
         // Store the $_POST values in different formats.
-        $rulesBodyKeys         = array();
-        $rulesBodyValues       = array();
-        $rulesBodyCombinations = array();
+        $rulesBodyKeys         = [];
+        $rulesBodyValues       = [];
+        $rulesBodyCombinations = [];
 
         // Retrieve the $_POST values.
         $rulesBodyAll = urldecode(http_build_query($data['POST']));
@@ -66,9 +66,9 @@ class Request
         }
 
         // Store the $_GET values in different formats.
-        $rulesParamsKeys         = array();
-        $rulesParamsValues       = array();
-        $rulesParamsCombinations = array();
+        $rulesParamsKeys         = [];
+        $rulesParamsValues       = [];
+        $rulesParamsCombinations = [];
 
         // Retrieve the $_GET values.
         $rulesParamsAll = urldecode(http_build_query($data['GET']));
@@ -115,7 +115,7 @@ class Request
      */
     public function getHeaders()
     {
-        $headers = array();
+        $headers = [];
         foreach ($_SERVER as $name => $value) {
             if (substr($name, 0, 5) == 'HTTP_') {
                 $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
@@ -159,11 +159,11 @@ class Request
         }
 
         // Extract the information we need from $_FILES.
-        $return = array();
+        $return = [];
         foreach ($_FILES as $data) {
             foreach ($data as $key2 => $data2) {
                 // We only want the name and type.
-                if (!in_array($key2, array('name', 'type'))) {
+                if (!in_array($key2, ['name', 'type'])) {
                     continue;
                 }
 
@@ -186,10 +186,10 @@ class Request
     public function captureKeys()
     {
         // Data we want to go through.
-        $data = array(
-        'POST' => $_POST,
-        'GET'  => $_GET,
-        );
+        $data = [
+            'POST' => $_POST,
+            'GET'  => $_GET,
+        ];
 
         // No need to continue if the option does not exist.
         if (!isset($this->options['whitelistKeysRules'])) {

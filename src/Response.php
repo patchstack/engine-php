@@ -17,7 +17,7 @@ class Response
      * @param  array $options
      * @return void
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
         $this->options = $options;
     }

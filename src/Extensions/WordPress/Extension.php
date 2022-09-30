@@ -11,17 +11,17 @@ class Extension implements ExtensionInterface
      *
      * @var array
      */
-    public $options = array(
-        'patchstack_basic_firewall_roles' => array('administrator', 'editor', 'author'),
+    public $options = [
+        'patchstack_basic_firewall_roles' => ['administrator', 'editor', 'author'],
         'patchstack_custom_whitelist_rules' => ''
-    );
+    ];
 
     /**
      * The request parameter values exploded into pairs.
      *
      * @var array
      */
-    private $requestParams = array(
+    private $requestParams = [
         'method' => 'method',
         'rulesFile' => 'rules->file',
         'rulesRawPost' => 'rules->raw->post',
@@ -38,7 +38,7 @@ class Extension implements ExtensionInterface
         'rulesParamsKeys' => 'rules->params->keys',
         'rulesParamsValues' => 'rules->params->values',
         'rulesParamsCombinations' => 'rules->params->combinations'
-    );
+    ];
 
     /**
      * The core of the Patchstack plugin.
@@ -83,16 +83,16 @@ class Extension implements ExtensionInterface
         // Insert into the logs.
         $wpdb->insert(
             $wpdb->prefix . 'patchstack_firewall_log',
-            array(
-            'ip'          => $this->getIpAddress(),
-            'request_uri' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
-            'user_agent'  => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
-            'method'      => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-            'fid'         => '55' . $ruleId,
-            'flag'        => '',
-            'post_data'   => $postData,
-            'block_type'  => $logType
-            )
+            [
+                'ip'          => $this->getIpAddress(),
+                'request_uri' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
+                'user_agent'  => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                'method'      => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
+                'fid'         => '55' . $ruleId,
+                'flag'        => '',
+                'post_data'   => $postData,
+                'block_type'  => $logType
+            ]
         );
     }
 
@@ -156,7 +156,7 @@ class Extension implements ExtensionInterface
                 AND apply_ban = 1
                 AND ip = '%s'
                 AND log_date >= ('" . current_time('mysql') . "' - INTERVAL %d MINUTE)",
-                array($this->getIpAddress(), $time)
+                [$this->getIpAddress(), $time]
             ),
             OBJECT
         );

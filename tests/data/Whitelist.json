@@ -1,20 +1,14 @@
 [
     {
         "id":1,
-        "title":"Whitelist IP 1.2.3.4 or 5.5.5.5",
-        "rule_closure": {      
-            "opis": "QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjI4Njp7QFArODNQUkRxb3pHWksrL3lzWTJJWWFrVWlkbG1rSkw5a1FvYW43MFo2TWc9LmE6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTE2OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gXGluX2FycmF5KCRfU0VSVkVSWydSRU1PVEVfQUREUiddLCBhcnJheSgnMS4yLjMuNCcsICc1LjUuNS41JykpOw0KfSI7czo1OiJzY29wZSI7TjtzOjQ6InRoaXMiO047czo0OiJzZWxmIjtzOjMyOiIwMDAwMDAwMDJiOWVkZjZjMDAwMDAwMDAxZmM3YzA4YiI7fX0=",
-            "laravel": "Tzo0NzoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjE6e3M6MTI6InNlcmlhbGl6YWJsZSI7Tzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXFNpZ25lZCI6Mjp7czoxMjoic2VyaWFsaXphYmxlIjtzOjI5MjoiTzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXE5hdGl2ZSI6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTE2OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gXGluX2FycmF5KCRfU0VSVkVSWydSRU1PVEVfQUREUiddLCBhcnJheSgnMS4yLjMuNCcsICc1LjUuNS41JykpOw0KfSI7czo1OiJzY29wZSI7TjtzOjQ6InRoaXMiO047czo0OiJzZWxmIjtzOjMyOiIwMDAwMDAwMDJiOWVkZjZjMDAwMDAwMDAxZmM3YzA4YiI7fSI7czo0OiJoYXNoIjtzOjQ0OiJ1SHcreEh5OVhnYjFaZm9DbWdRTzVFVWZHY2RvRlFuaU8vZ3hwZTdHc1hVPSI7fX0="
-        },
+        "title":"Whitelist IP 127.0.0.1",
+        "rules":{"server.ip":{"match":{"type":"array_in_array","value":["127.0.0.1"]}}},
         "type":"WHITELIST"
     },
     {
         "id":2,
         "title":"Whitelist if POST request action parameter is set to wp_heartbeat",
-        "rule_closure": {      
-            "opis": "QzozMjoiT3Bpc1xDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjI4NDp7QDFVblh5cXFPdVhRa0RiakNLTU5jVlM0SkhtcmRxdjVheG9md0ltVGI5RmM9LmE6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTE0OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gaXNzZXQoJF9QT1NUWydhY3Rpb24nXSkgJiYgJF9QT1NUWydhY3Rpb24nXSA9PSAnd3BfaGVhcnRiZWF0JzsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDA3NzQ4NWY3MzAwMDAwMDAwMWEzZDI5MTUiO319",
-            "laravel": "Tzo0NzoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6YWJsZUNsb3N1cmUiOjE6e3M6MTI6InNlcmlhbGl6YWJsZSI7Tzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXFNpZ25lZCI6Mjp7czoxMjoic2VyaWFsaXphYmxlIjtzOjI5MDoiTzo0NjoiTGFyYXZlbFxTZXJpYWxpemFibGVDbG9zdXJlXFNlcmlhbGl6ZXJzXE5hdGl2ZSI6NTp7czozOiJ1c2UiO2E6MDp7fXM6ODoiZnVuY3Rpb24iO3M6MTE0OiJmdW5jdGlvbiAoJGlwLCAkZGF0YXNldCwgJHJlcXVlc3QpIHsNCiAgICByZXR1cm4gaXNzZXQoJF9QT1NUWydhY3Rpb24nXSkgJiYgJF9QT1NUWydhY3Rpb24nXSA9PSAnd3BfaGVhcnRiZWF0JzsNCn0iO3M6NToic2NvcGUiO047czo0OiJ0aGlzIjtOO3M6NDoic2VsZiI7czozMjoiMDAwMDAwMDA3NzQ4NWY3MzAwMDAwMDAwMWEzZDI5MTUiO30iO3M6NDoiaGFzaCI7czo0NDoiNlR2SitkVEIzTElReXF2RFg1SE1oOVRNSm5nV2NnZzlyNStoejJ6TGwyYz0iO319"
-        },
+        "rules":{"post.action":{"match":{"type":"equals","value":"wp_heartbeat"}}},
         "type":"WHITELIST"
     }
 ]

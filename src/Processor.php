@@ -13,47 +13,40 @@ class Processor
      *
      * @var array
      */
-    private $firewallRules = array();
+    private $firewallRules = [];
 
     /**
      * The legacy firewall rules to process.
      *
      * @var array
      */
-    private $firewallRulesLegacy = array();
+    private $firewallRulesLegacy = [];
 
     /**
      * The whitelist rules to process.
      *
      * @var array
      */
-    private $whitelistRules = array();
+    private $whitelistRules = [];
 
     /**
      * The legacy whitelist rules to process.
      *
      * @var array
      */
-    private $whitelistRulesLegacy = array();
-
-    /**
-     * Firewall datasets which can be interacted with by the firewall rules.
-     *
-     * @var array
-     */
-    private $dataset = array();
+    private $whitelistRulesLegacy = [];
 
     /**
      * The options of the engine.
      *
      * @var array
      */
-    private $options = array(
+    private $options = [
         'autoblockAttempts' => 10,
         'autoblockMinutes' => 30,
         'autoblockTime' => 60,
-        'whitelistKeysRules' => array()
-    );
+        'whitelistKeysRules' => []
+    ];
 
     /**
      * The extension that will process specific logic for the CMS.
@@ -77,43 +70,31 @@ class Processor
     private $response;
 
     /**
-     * The secret that is used for the firewall rules integrity.
-     * Default is set to "secret" for easy PHPUnit testing.
-     *
-     * @var string
-     */
-    private $secret = 'secret';
-
-    /**
      * Creates a new processor instance.
      *
      * @param ExtensionInterface $extension
      * @param array $firewallRules
      * @param array $whitelistRules
      * @param array $options
-     * @param array $datasets
      * @param array $firewallRulesLegacy
      * @param array $whitelistRulesLegacy
      * @return void
      */
     public function __construct(
         ExtensionInterface $extension,
-        $firewallRules = array(),
-        $whitelistRules = array(),
-        $options = array(),
-        $datasets = array(),
-        $firewallRulesLegacy = array(),
-        $whitelistRulesLegacy = array()
+        $firewallRules = [],
+        $whitelistRules = [],
+        $options = [],
+        $firewallRulesLegacy = [],
+        $whitelistRulesLegacy = []
     ) {
         $this->extension = $extension;
         $this->firewallRules = $firewallRules;
         $this->whitelistRules = $whitelistRules;
         $this->options = array_merge($this->options, $options);
-        $this->dataset = $datasets;
         $this->firewallRulesLegacy = $firewallRulesLegacy;
         $this->whitelistRulesLegacy = $whitelistRulesLegacy;
 
-        $this->secret = isset($options['secret']) ? $options['secret'] : 'secret';
         $this->request = new Request($this->options);
         $this->response = new Response($this->options);
     }
@@ -156,44 +137,11 @@ class Processor
             return true;
         }
 
-        // Since the Opis/Closure package does not support PHP 8.1+, we have to use Laravel's ported version for 8.1+.
-        require dirname(__FILE__) . '/../vendor/autoload.php';
-        if (PHP_VERSION_ID < 80100) {
-            \Opis\Closure\SerializableClosure::setSecretKey($this->secret);
-            $type = 'opis';
-        } else {
-            \Laravel\SerializableClosure\SerializableClosure::setSecretKey($this->secret);
-            $type = 'laravel';
-        }
-
-        // Grab the IP address of the request.
-        $ip = $this->extension->getIpAddress();
-
-        // Store the datasets in a shorter variable for easy access.
-        $dataset = $this->dataset;
-
         // Merge the rules together. First iterate through the whitelist rules.
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
         foreach ($rules as $rule) {
-            // Get the firewall rule and extract it.
-            $vpatch = base64_decode($rule->rule_closure->{$type});
-            if (!$vpatch) {
-                continue;
-            }
-
             // Execute the firewall rule.
-            $rule_hit = false;
-            try {
-                $vpatch = unserialize($vpatch);
-                if (!$vpatch) {
-                    continue;
-                }
-
-                $closure = $vpatch->getClosure();
-                $rule_hit = $closure($ip, $dataset, $request);
-            } catch (\Exception $e) {
-                continue;
-            }
+            $rule_hit = $this->executeFirewall(json_decode(json_encode($rule->rules), true));
 
             // If the payload did not match the rule, continue.
             if (!$rule_hit) {
@@ -222,10 +170,314 @@ class Processor
 
         // Run the legacy firewall rules processor for backwards compatibility.
         if (count($this->firewallRulesLegacy) > 0) {
-            $this->launchLegacy(true, $request, $ip);
+            $this->launchLegacy(true, $request, $this->extension->getIpAddress());
         }
 
         return true;
+    }
+
+    /**
+     * Execute the firewall rules.
+     * 
+     * @param array $rules
+     * @return bool
+     */
+    public function executeFirewall($rules)
+    {
+        // Count number of inclusive rules, if any.
+        $inclusiveCount = 0;
+        if (count($rules) > 1) {
+            $inclusiveCount = $this->getInclusiveCount($rules);
+        }
+
+        // Keep track of how many inclusive rule hits.
+        $inclusiveHits = 0;
+
+        // Loop through all of the conditions for this rule.
+        foreach ($rules as $key => $rule) {
+            // Extract the value of the paramater that we want.
+            $value = $this->getParameterValue($key);
+            if (is_null($value) && !is_numeric($key)) {
+                continue;
+            }
+
+            // Apply mutations, if any.
+            if (isset($rule['mutations']) && is_array($rule['mutations'])) {
+                $value = $this->applyMutation($rule['mutations'], $value);
+                if (is_null($value)) {
+                    continue;
+                }
+            }
+
+            // Perform the matching.
+            if (isset($rule['match']) && is_array($rule['match']) || isset($rule['rules'])) {
+
+                // Do we have to process child-rules?
+                if (isset($rule['rules'])) {
+                    $match = $this->executeFirewall($rule['rules']);
+                } else {
+                    $match = $this->matchParameterValue($rule['match'], $value);
+                }
+
+                // Is the rule a match?
+                if ($match) {
+                    // In case there are multiple rules, they may require chained AND conditions.
+                    if ($inclusiveCount <= 1) {
+                        return true;
+                    } else {
+                        $inclusiveHits++;
+                    }
+                }
+            }
+        }
+
+        // In case we hit all of the AND conditions.
+        if ($inclusiveCount > 1 && $inclusiveHits === $inclusiveCount) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the number of inclusive rules as part of the rule group.
+     * 
+     * @param array $rules
+     * @return int
+     */
+    public function getInclusiveCount($rules)
+    {
+        if (count($rules) == 1) {
+            return 1;
+        }
+
+        $count = 0;
+        foreach ($rules as $rule) {
+            if (isset($rule['inclusive']) && $rule['inclusive'] === true) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * With the given parameter value, attempt to match it.
+     * 
+     * @param mixed $match
+     * @param mixed $value
+     * @return bool
+     */
+    public function matchParameterValue($match, $value)
+    {
+        // Take some of the parameters for easy access.
+        $matchType = isset($match['type']) ? $match['type'] : null;
+        $matchValue = isset($match['value']) ? $match['value'] : null;
+
+        // Perform a match depending on the given match type.
+        if ($matchType == 'equals' && is_scalar($value)) {
+            return $matchValue == $value;
+        }
+
+        if ($matchType == 'bigger_than' && is_scalar($value)) {
+            return $value > $matchValue;
+        }
+
+        if ($matchType == 'less_than' && is_scalar($value)) {
+            return $value < $matchValue;
+        }
+
+        if ($matchType == 'isset') {
+            return true;
+        }
+
+        if ($matchType == 'ctype_digit' && is_scalar($value)) {
+            return @ctype_digit($value) === $matchValue;
+        }
+
+        if ($matchType == 'ctype_alnum' && is_scalar($value)) {
+            return @ctype_alnum($value) === $matchValue;
+        }
+
+        if ($matchType == 'is_numeric' && is_scalar($value)) {
+            return @is_numeric($value) === $matchValue;
+        }
+
+        if (($matchType == 'contains' || $matchType == 'stripos') && is_scalar($value)) {
+            return @stripos($value, $matchValue) !== false;
+        }
+
+        if ($matchType == 'regex' && is_scalar($value)) {
+            return @preg_match($matchValue, @urldecode($value)) === 1;
+        }
+
+        if ($matchType == 'current_user_cannot' && function_exists('current_user_can')) {
+            return @!current_user_can($matchValue);
+        }
+
+        if ($matchType == 'in_array' && is_array($value)) {
+            return @in_array($value, $matchValue);
+        }
+
+        if ($matchType == 'not_in_array' && is_array($value)) {
+            return @!in_array($value, $matchValue);
+        }
+
+        if ($matchType == 'array_in_array' && is_array($value)) {
+            return @array_intersect($value, $matchValue);
+        }
+
+        if ($matchType == 'array_key_value' && isset($match['key'], $match['match'])) {
+            $value = $this->getParameterValue($match['key'], $value);
+            return $this->matchParameterValue($match['match'], $value);
+        }
+
+        return false;
+    }
+
+    /**
+     * Grab the request parameters we are trying to capture for the given rule.
+     * 
+     * @param mixed $parameter
+     * @param array $data
+     * @return mixed|null
+     */
+    public function getParameterValue($parameter, $data = [])
+    {
+        // For when a rule contains sub-rules.
+        if (ctype_digit($parameter)) {
+            return null;
+        }
+
+        // Explode on the dot to grab the proper key value.
+        $t = explode('.', $parameter);
+        $type = $t[0];
+
+        if (count($data) == 0) {
+            array_shift($t);
+        }
+
+        switch ($type) {
+            case 'post':
+                $data = $_POST;
+                break;
+            case 'get':
+                $data = $_GET;
+                break;
+            case 'request':
+                $data = $_REQUEST;
+                break;
+            case 'cookie':
+                $data = $_COOKIE;
+                break;
+            case 'files':
+                $data = $_FILES;
+                break;
+            case 'server':
+                $data = $_SERVER;
+                break;
+            case 'raw':
+                $data = @file_get_contents( 'php://input' );
+
+                // Ignore if no data in payload.
+                if (empty($data)) {
+                    $data = [];
+                    break;
+                }
+
+                // Determine if it's base64 encoded.
+                if (preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $data)) {
+                    $decoded = base64_decode($data, true);
+                    if ($decoded !== false) {
+                        $encoding = mb_detect_encoding($decoded);
+                        if (in_array($encoding, ['UTF-8', 'ASCII'], true) && $decoded !== false && base64_encode($decoded) === $data) {
+                            $data = $decoded;
+                        }
+                    }
+                }
+
+                // Determine if it's JSON encoded.
+                $result = json_decode($data, true);
+                if (is_array($result)) {
+                    $data = $result;
+                }
+
+                // If it's not an array, no need to continue.
+                if (!is_array($data)) {
+                    return $data;
+                }
+            default:
+                break;
+        }
+
+        // No need to continue if we don't have any data to match against.
+        if (count($data) == 0) {
+            return null;
+        }
+
+        // Special condition for the IP address.
+        if ($type === 'server' && $t[0] === 'ip') {
+            return [$this->extension->getIpAddress()];
+        }
+
+        // Just one parameter we have to match against.
+        if (count($t) === 1) {
+            return isset($data[$t[0]]) ? $data[$t[0]] : null;
+        }
+
+        // For multidimensional arrays.
+        $end  = $data;
+        $skip = false;
+        foreach ( $t as $var ) {
+            if ( ! isset( $end[ $var ] ) ) {
+                $skip = true;
+                break;
+            }
+            $end = $end[ $var ];
+        }
+
+        return $skip ? null : $end;
+    }
+
+    /**
+     * Apply mutations to the captured value.
+     * 
+     * @param array $mutations
+     * @param mixed $value
+     * @return mixed
+     */
+    public function applyMutation($mutations, $value)
+    {
+        if (count($mutations) === 0) {
+            return $value;
+        }
+
+        // Define the allowed mutations.
+        // Array value contains the arguments to pass to the function.
+        $allowed = [
+            'json_encode' => [],
+            'json_decode' => [true],
+            'base64_decode' => [],
+            'intval' => []
+        ];
+
+        // If it's not a whitelisted mutation, reject and return original value.
+        foreach ($mutations as $mutation) {
+            if (!isset($allowed[$mutation])) {
+                return $value;
+            }
+        }
+
+        // Apply the mutations in ascending order.
+        try {
+            foreach ($mutations as $mutation) {
+                $value = @$mutation($value, ...$allowed[$mutation]);
+            }
+        } catch (\Exception $e) {
+            return $value;
+        }
+
+        return $value;
     }
 
     /**
@@ -237,14 +489,14 @@ class Processor
      * @param string $ip
      * @return boolean
      */
-    public function launchLegacy($mustExit = true, $request = array(), $ip = '')
+    public function launchLegacy($mustExit = true, $request = [], $ip = '')
     {
         // Obtain the IP address and request data if it has not been supplied yet.
         $client_ip = $ip == '' ? $this->extension->getIpAddress() : $ip;
         $requests  = count($request) == 0 ? $this->request->capture() : $request;
 
         // The request parameter values exploded into pairs.
-        $requestParams = array(
+        $requestParams = [
             'method' => 'method',
             'rulesFile' => 'rules->file',
             'rulesRawPost' => 'rules->raw->post',
@@ -261,7 +513,7 @@ class Processor
             'rulesParamsKeys' => 'rules->params->keys',
             'rulesParamsValues' => 'rules->params->values',
             'rulesParamsCombinations' => 'rules->params->combinations'
-        );
+        ];
 
         // Iterate through all root objects.
         foreach ($this->firewallRulesLegacy as $firewall_rule) {
