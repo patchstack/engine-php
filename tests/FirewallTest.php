@@ -57,6 +57,7 @@ final class FirewallTest extends TestCase
 
         $_POST = isset($payload['POST']) ? $payload['POST'] : [];
         $_GET = isset($payload['GET']) ? $payload['GET'] : [];
+        $_SERVER['REQUEST_URI'] = isset($payload['SERVER'], $payload['SERVER']['REQUEST_URI']) ? $payload['SERVER']['REQUEST_URI'] : '';
     }
 
     /**
@@ -92,6 +93,135 @@ final class FirewallTest extends TestCase
         $this->alterPayload(
             ['POST' => [
             'payload' => $payload
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block WordPress WP-AJAX action restaurant_system_customize_button or restaurant_system_insert_dialog, when not executed by an administrator.
+        // Should return false because current_user_can does not exist.
+        $this->setUpFirewallProcessor([$this->rules[3]]);
+        $this->alterPayload(
+            ['POST' => [
+            'action' => 'restaurant_system_customize_button'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block WordPress WP-AJAX action restaurant_system_customize_button or restaurant_system_insert_dialog.
+        $this->setUpFirewallProcessor([$this->rules[4]]);
+        $this->alterPayload(
+            ['POST' => [
+            'action' => 'restaurant_system_customize_button'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block access to specific WP-JSON endpoint.
+        $this->setUpFirewallProcessor([$this->rules[5]]);
+        $this->alterPayload(
+            ['SERVER' => [
+            'REQUEST_URI' => '/wp-json/yikes/cpt/v1/settings'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block access to specific WP-JSON endpoint.
+        $this->setUpFirewallProcessor([$this->rules[5]]);
+        $this->alterPayload(
+            ['GET' => [
+            'rest_route' => '/wp-json/yikes/cpt/v1/settings'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block access to endpoint that should only accept an integer of less than 101.
+        $this->setUpFirewallProcessor([$this->rules[6]]);
+        $this->alterPayload(
+            ['GET' => [
+            'pid' => 10000
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block access to endpoint that should only accept an integer of more than 99.
+        $this->setUpFirewallProcessor([$this->rules[7]]);
+        $this->alterPayload(
+            ['GET' => [
+            'pid' => 99
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if a POST parameter is not a ctype_alnum.
+        $this->setUpFirewallProcessor([$this->rules[8]]);
+        $this->alterPayload(
+            ['POST' => [
+            'value' => 'something)'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if a POST parameter is not numeric.
+        $this->setUpFirewallProcessor([$this->rules[9]]);
+        $this->alterPayload(
+            ['POST' => [
+            'number' => '8*8'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if the URL matches a regex.
+        $this->setUpFirewallProcessor([$this->rules[10]]);
+        $this->alterPayload(
+            ['SERVER' => [
+            'REQUEST_URI' => '/something/backdoor/something-else/'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if value is not part of an array of values.
+        $this->setUpFirewallProcessor([$this->rules[11]]);
+        $this->alterPayload(
+            ['GET' => [
+            'user' => 'simon'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[11]]);
+        $this->alterPayload(
+            ['GET' => [
+            'user' => 'admin'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if an array of values is part of a given array.
+        $this->setUpFirewallProcessor([$this->rules[12]]);
+        $this->alterPayload(
+            ['POST' => [
+            'usernames' => ['simon', 'peter']
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[12]]);
+        $this->alterPayload(
+            ['POST' => [
+            'usernames' => ['admin']
             ]]
         );
         $this->assertFalse($this->processor->launch(false));

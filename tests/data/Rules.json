@@ -2,7 +2,7 @@
     {
         "id":1,
         "title":"Block test parameter being present in the URL",
-        "rules":{"get.test":{"match":{"type":"isset"}}},
+        "rules":[{"parameter":"get.test","match":{"type":"isset"}}],
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
@@ -10,7 +10,7 @@
     {
         "id":2,
         "title":"Block backdoor parameter in payload set to mybackdoor and user agent containing some_backdoor_agent.",
-        "rules":{"post.backdoor":{"match":{"type":"equals","value":"mybackdoor"},"inclusive":true},"server.HTTP_USER_AGENT":{"match":{"type":"contains","value":"some_backdoor_agent"},"inclusive":true}},
+        "rules":[{"parameter":"post.backdoor","match":{"type":"equals","value":"mybackdoor"},"inclusive":true},{"parameter":"server.HTTP_USER_AGENT","match":{"type":"contains","value":"some_backdoor_agent"},"inclusive":true}],
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
@@ -18,7 +18,87 @@
     {
         "id":3,
         "title":"Block a base64 json encoded request with the user_role parameter set to administrator",
-        "rules":{"post.payload":{"mutations":["base64_decode","json_decode"],"match":{"type":"array_key_value","key":"user_role","match":{"type":"equals","value":"administrator"}}}},
+        "rules":[{"parameter":"post.payload","mutations":["base64_decode","json_decode"],"match":{"type":"array_key_value","key":"user_role","match":{"type":"equals","value":"administrator"}}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":4,
+        "title":"Block WordPress WP-AJAX action restaurant_system_customize_button or restaurant_system_insert_dialog, when not executed by an administrator.",
+        "rules":[{"parameter":"rules","rules":[{"parameter":"get.action","match":{"type":"in_array","value":["restaurant_system_customize_button","restaurant_system_insert_dialog"]}},{"parameter":"post.action","match":{"type":"in_array","value":["restaurant_system_customize_button","restaurant_system_insert_dialog"]}}],"inclusive":true},{"parameter":false,"match":{"type":"current_user_cannot","value":"administrator"},"inclusive":true}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":5,
+        "title":"Block WordPress WP-AJAX action restaurant_system_customize_button or restaurant_system_insert_dialog.",
+        "rules":[{"parameter":"get.action","match":{"type":"in_array","value":["restaurant_system_customize_button","restaurant_system_insert_dialog"]}},{"parameter":"post.action","match":{"type":"in_array","value":["restaurant_system_customize_button","restaurant_system_insert_dialog"]}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":6,
+        "title":"Block access to specific WP-JSON endpoint.",
+        "rules":[{"parameter":"server.REQUEST_URI","match":{"type":"contains","value":"yikes\/cpt\/v1\/settings"}},{"parameter":"post.rest_route","match":{"type":"contains","value":"yikes\/cpt\/v1\/settings"}},{"parameter":"get.rest_route","match":{"type":"contains","value":"yikes\/cpt\/v1\/settings"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":7,
+        "title":"Block access to endpoint that should only accept an integer of less than 101.",
+        "rules":[{"parameter":"get.pid","match":{"type":"ctype_digit","value":false}},{"parameter":"get.pid","match":{"type":"bigger_than","value":100}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":8,
+        "title":"Block access to endpoint that should only accept an integer of more than 99.",
+        "rules":[{"parameter":"get.pid","match":{"type":"ctype_digit","value":false}},{"parameter":"get.pid","match":{"type":"less_than","value":100}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":9,
+        "title":"Determine if a POST parameter is a ctype_alnum.",
+        "rules":[{"parameter":"post.value","match":{"type":"ctype_alnum","value":false}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":10,
+        "title":"Determine if a POST parameter is a numeric.",
+        "rules":[{"parameter":"post.number","match":{"type":"is_numeric","value":false}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":11,
+        "title":"Determine if a POST parameter is a numeric.",
+        "rules":[{"parameter":"server.REQUEST_URI","match":{"type":"regex","value":"\/(\\\/something\\\/)\/msi"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":12,
+        "title":"Determine if a value is not in an array",
+        "rules":[{"parameter":"get.user","match":{"type":"not_in_array","value":["admin"]}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":13,
+        "title":"Determine if an array contains any values from given array.",
+        "rules":[{"parameter":"post.usernames","match":{"type":"array_in_array","value":["test","admin"]}}],
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null

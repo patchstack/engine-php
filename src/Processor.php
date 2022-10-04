@@ -140,6 +140,11 @@ class Processor
         // Merge the rules together. First iterate through the whitelist rules.
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
         foreach ($rules as $rule) {
+            // Should never happen.
+            if (!isset($rule->rules) || empty($rule->rules)) {
+                continue;
+            }
+
             // Execute the firewall rule.
             $rule_hit = $this->executeFirewall(json_decode(json_encode($rule->rules), true));
 
@@ -194,10 +199,15 @@ class Processor
         $inclusiveHits = 0;
 
         // Loop through all of the conditions for this rule.
-        foreach ($rules as $key => $rule) {
+        foreach ($rules as $rule) {
+            // Parameter must always be present.
+            if (!isset($rule['parameter'])) {
+                continue;
+            }
+
             // Extract the value of the paramater that we want.
-            $value = $this->getParameterValue($key);
-            if (is_null($value) && !is_numeric($key)) {
+            $value = $this->getParameterValue($rule['parameter']);
+            if (is_null($value)) {
                 continue;
             }
 
@@ -315,11 +325,11 @@ class Processor
             return @!current_user_can($matchValue);
         }
 
-        if ($matchType == 'in_array' && is_array($value)) {
+        if ($matchType == 'in_array' && !is_array($value)) {
             return @in_array($value, $matchValue);
         }
 
-        if ($matchType == 'not_in_array' && is_array($value)) {
+        if ($matchType == 'not_in_array' && !is_array($value)) {
             return @!in_array($value, $matchValue);
         }
 
@@ -345,7 +355,7 @@ class Processor
     public function getParameterValue($parameter, $data = [])
     {
         // For when a rule contains sub-rules.
-        if (ctype_digit($parameter)) {
+        if (ctype_digit($parameter) || empty($parameter)) {
             return null;
         }
 
