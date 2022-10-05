@@ -463,12 +463,23 @@ class Processor
         }
 
         // Define the allowed mutations.
-        // Array value contains the arguments to pass to the function.
+        // Array value contains the arguments to pass to the function as well as expected type.
         $allowed = [
-            'json_encode' => [],
-            'json_decode' => [true],
-            'base64_decode' => [],
-            'intval' => []
+            'json_encode' => [
+                'args' => []
+            ],
+            'json_decode' => [
+                'args' => [true],
+                'type' => 'is_string'
+            ],
+            'base64_decode' => [
+                'args' => [],
+                'type' => 'is_string'
+            ],
+            'intval' => [
+                'args' => [],
+                'type' => 'is_scalar'
+            ]
         ];
 
         // If it's not a whitelisted mutation, reject and return original value.
@@ -481,7 +492,18 @@ class Processor
         // Apply the mutations in ascending order.
         try {
             foreach ($mutations as $mutation) {
-                $value = @$mutation($value, ...$allowed[$mutation]);
+                // In order to avoid errors if the wrong type of value is passed to the function.
+                if (isset($allowed[$mutation]['type']) && !call_user_func($allowed[$mutation]['type'], $value)) {
+                    continue;
+                }
+
+                // Call the function with given arguments.
+                $value = call_user_func_array($mutation, array_merge([$value], $allowed[$mutation]['args']));
+
+                // No need to continue in these scenarios.
+                if (is_null($value) || $value === false || $value === 0) {
+                    return $value;
+                }
             }
         } catch (\Exception $e) {
             return $value;
