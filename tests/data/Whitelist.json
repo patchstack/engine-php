@@ -2,7 +2,7 @@
     {
         "id":1,
         "title":"Whitelist IP 127.0.0.1",
-        "rules":[{"parameter":"server.ip","match":{"type":"array_in_array","value":["127.0.0.1"]}}],
+        "rules":[{"parameter":"server.ip","match":{"type":"in_array","value":["127.0.0.1"]}}],
         "type":"WHITELIST"
     },
     {

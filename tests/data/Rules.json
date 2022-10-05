@@ -81,7 +81,7 @@
     },
     {
         "id":11,
-        "title":"Determine if a POST parameter is a numeric.",
+        "title":"Determine if the URL matches a regex",
         "rules":[{"parameter":"server.REQUEST_URI","match":{"type":"regex","value":"\/(\\\/something\\\/)\/msi"}}],
         "cat":"TEST",
         "type":"BLOCK",

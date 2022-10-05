@@ -427,7 +427,7 @@ class Processor
 
         // Special condition for the IP address.
         if ($type === 'server' && $t[0] === 'ip') {
-            return [$this->extension->getIpAddress()];
+            return $this->extension->getIpAddress();
         }
 
         // Just one parameter we have to match against.
