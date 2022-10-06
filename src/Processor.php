@@ -145,7 +145,7 @@ class Processor
                 continue;
             }
 
-            // Execute the firewall rule.
+            // Transform rule object to array, then execute the firewall rule.
             $rule_hit = $this->executeFirewall(json_decode(json_encode($rule->rules), true));
 
             // If the payload did not match the rule, continue.
@@ -285,15 +285,15 @@ class Processor
         $matchValue = isset($match['value']) ? $match['value'] : null;
 
         // Perform a match depending on the given match type.
-        if ($matchType == 'equals' && is_scalar($value)) {
+        if ($matchType == 'equals' && is_scalar($value) && is_scalar($matchValue)) {
             return $matchValue == $value;
         }
 
-        if ($matchType == 'bigger_than' && is_scalar($value)) {
+        if ($matchType == 'bigger_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value > $matchValue;
         }
 
-        if ($matchType == 'less_than' && is_scalar($value)) {
+        if ($matchType == 'less_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value < $matchValue;
         }
 
@@ -321,19 +321,19 @@ class Processor
             return @preg_match($matchValue, @urldecode($value)) === 1;
         }
 
-        if ($matchType == 'current_user_cannot' && function_exists('current_user_can')) {
+        if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can')) {
             return @!current_user_can($matchValue);
         }
 
-        if ($matchType == 'in_array' && !is_array($value)) {
+        if ($matchType == 'in_array' && !is_array($value) && is_array($matchValue)) {
             return @in_array($value, $matchValue);
         }
 
-        if ($matchType == 'not_in_array' && !is_array($value)) {
+        if ($matchType == 'not_in_array' && !is_array($value) && is_array($matchValue)) {
             return @!in_array($value, $matchValue);
         }
 
-        if ($matchType == 'array_in_array' && is_array($value)) {
+        if ($matchType == 'array_in_array' && is_array($value) && is_array($matchValue)) {
             return @array_intersect($value, $matchValue);
         }
 
