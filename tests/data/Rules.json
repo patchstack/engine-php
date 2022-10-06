@@ -110,5 +110,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":15,
+        "title":"Determine if a certain value is present anywhere in any uploaded file.",
+        "rules":[{"parameter":"files.img","match":{"type":"file_contains","match":{"type":"contains","value":"<?php"}}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

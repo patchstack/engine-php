@@ -285,65 +285,113 @@ class Processor
         $matchValue = isset($match['value']) ? $match['value'] : null;
 
         // Perform a match depending on the given match type.
+        // If a scalar matches another scalar (loose).
         if ($matchType == 'equals' && is_scalar($value) && is_scalar($matchValue)) {
             return $matchValue == $value;
         }
 
+        // If a scalar matches another scaler (strict).
         if ($matchType == 'equals_strict' && is_scalar($value) && is_scalar($matchValue)) {
             return $matchValue === $value;
         }
 
+        // If a scalar is bigger than another scalar.
         if ($matchType == 'more_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value > $matchValue;
         }
 
+        // If a scalar is less than another scalar.
         if ($matchType == 'less_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value < $matchValue;
         }
 
+        // If the parameter is present at all.
         if ($matchType == 'isset') {
             return true;
         }
 
+        // If a scaler is a ctype digit.
         if ($matchType == 'ctype_digit' && is_scalar($value)) {
             return @ctype_digit($value) === $matchValue;
         }
 
+        // If a scaler is a ctype alnum.
         if ($matchType == 'ctype_alnum' && is_scalar($value)) {
             return @ctype_alnum($value) === $matchValue;
         }
 
+        // If a scalar is numeric.
         if ($matchType == 'is_numeric' && is_scalar($value)) {
             return @is_numeric($value) === $matchValue;
         }
 
+        // If a scalar contains a value.
         if (($matchType == 'contains' || $matchType == 'stripos') && is_scalar($value)) {
             return @stripos($value, $matchValue) !== false;
         }
 
+        // If a string matches a regular expression.
         if ($matchType == 'regex' && is_string($matchValue) && is_scalar($value)) {
             return @preg_match($matchValue, @urldecode($value)) === 1;
         }
 
+        // If the user does not have a WP privilege.
         if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can')) {
             return @!current_user_can($matchValue);
         }
 
+        // If a value is in an array.
         if ($matchType == 'in_array' && !is_array($value) && is_array($matchValue)) {
             return @in_array($value, $matchValue);
         }
 
+        // If a value is not in an array.
         if ($matchType == 'not_in_array' && !is_array($value) && is_array($matchValue)) {
             return @!in_array($value, $matchValue);
         }
 
+        // If an array of values is in another array of values.
         if ($matchType == 'array_in_array' && is_array($value) && is_array($matchValue)) {
             return @array_intersect($value, $matchValue);
         }
 
+        // If a specific parameter key matches a sub-match condition.
         if ($matchType == 'array_key_value' && isset($match['key'], $match['match'])) {
             $value = $this->getParameterValue($match['key'], $value);
             return $this->matchParameterValue($match['match'], $value);
+        }
+
+        // If any of the uploaded files in the parameter matches a sub-match condition.
+        if ($matchType == 'file_contains' && isset($match['match'])) {
+            // Extract all tmp_names.
+            if (isset($value['tmp_name'])) {
+                $files = $value['tmp_name'];
+                if (!is_array($files)) {
+                    $files = [$files];
+                }
+            } else {
+                $files = array_column($value, 'tmp_name');
+            }
+            
+            // No need to continue if there are no files.
+            if (is_array($files) && count($files) === 0) {
+                return false;
+            }
+
+            // Cast all tmp_names to a single-dimension array.
+            $files = $this->getArrayValues($files, '', 'array');
+            if (is_array($files) && count($files) === 0) {
+                return false;
+            }
+
+            // Get the contents of the files.
+            $contents = '';
+            foreach ($files as $file) {
+                $contents .= (string) @file_get_contents($file);
+            }
+
+            // Now attempt to match it.
+            return $this->matchParameterValue($match['match'], $contents);
         }
 
         return false;
@@ -540,25 +588,45 @@ class Processor
      * Given an array, multi-dimensional or not, extract all of its values.
      * 
      * @param array $data
-     * @return string
+     * @param string $glue
+     * @param string $type
+     * @return string|array
      */
-    public function getArrayValues($data, $glue = '&')
+    public function getArrayValues($data, $glue = '&', $type = 'string')
     {
-		$ret = '';
-
-		foreach ($data as $key => $item) {
+        // If we want to return a single line string.
+        if ($type == 'string') {
+            $ret = '';
+            foreach ($data as $key => $item) {
+                if (empty($item)) {
+                    continue;
+                }
+    
+                if (is_array($item)) {
+                    $ret .= $this->getArrayValues($item, $glue) . $glue;
+                } else {
+                    $ret .= $key . '=' . $item . $glue;
+                }
+            }
+    
+            return substr($ret, 0, 0 - strlen($glue));
+        }
+        
+        // Or a single dimension array with each value its own entry.
+        $ret = [];
+        foreach ($data as $key => $item) {
             if (empty($item)) {
                 continue;
             }
 
-			if (is_array($item)) {
-				$ret .= $this->getArrayValues($item, $glue) . $glue;
-			} else {
-				$ret .= $key . '=' . $item . $glue;
-			}
-		}
+            if (is_array($item)) {
+                $ret = array_merge($ret, $this->getArrayValues($item, $glue, 'array'));
+            } else {
+                $ret[] = $item;
+            }
+        }
 
-		return substr($ret, 0, 0 - strlen($glue));
+        return $ret;
     }
 
     /**
