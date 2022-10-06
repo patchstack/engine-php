@@ -289,6 +289,10 @@ class Processor
             return $matchValue == $value;
         }
 
+        if ($matchType == 'equals_strict' && is_scalar($value) && is_scalar($matchValue)) {
+            return $matchValue === $value;
+        }
+
         if ($matchType == 'more_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value > $matchValue;
         }
