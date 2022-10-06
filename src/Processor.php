@@ -289,7 +289,7 @@ class Processor
             return $matchValue == $value;
         }
 
-        if ($matchType == 'bigger_than' && is_scalar($value) && is_scalar($matchValue)) {
+        if ($matchType == 'more_than' && is_scalar($value) && is_scalar($matchValue)) {
             return $value > $matchValue;
         }
 
@@ -317,7 +317,7 @@ class Processor
             return @stripos($value, $matchValue) !== false;
         }
 
-        if ($matchType == 'regex' && is_scalar($value)) {
+        if ($matchType == 'regex' && is_string($matchValue) && is_scalar($value)) {
             return @preg_match($matchValue, @urldecode($value)) === 1;
         }
 
@@ -368,6 +368,14 @@ class Processor
         }
 
         switch ($type) {
+            case 'all':
+                $data = [
+                    'post' => $_POST,
+                    'get' => $_GET,
+                    'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
+                    'raw' => ['raw' => $this->getParameterValue('raw')]
+                ];
+                break;
             case 'post':
                 $data = $_POST;
                 break;
@@ -479,6 +487,14 @@ class Processor
             'intval' => [
                 'args' => [],
                 'type' => 'is_scalar'
+            ],
+            'urldecode' => [
+                'args' => [],
+                'type' => 'is_string'
+            ],
+            'getArrayValues' => [
+                'args' => [],
+                'type' => 'is_array'
             ]
         ];
 
@@ -498,8 +514,12 @@ class Processor
                 }
 
                 // Call the function with given arguments.
-                $value = call_user_func_array($mutation, array_merge([$value], $allowed[$mutation]['args']));
-
+                if ($mutation == 'getArrayValues') {
+                    $value = $this->getArrayValues($value);
+                } else {
+                    $value = call_user_func_array($mutation, array_merge([$value], $allowed[$mutation]['args']));
+                }
+                
                 // No need to continue in these scenarios.
                 if (is_null($value) || $value === false || $value === 0) {
                     return $value;
@@ -510,6 +530,31 @@ class Processor
         }
 
         return $value;
+    }
+
+    /**
+     * Given an array, multi-dimensional or not, extract all of its values.
+     * 
+     * @param array $data
+     * @return string
+     */
+    public function getArrayValues($data, $glue = '&')
+    {
+		$ret = '';
+
+		foreach ($data as $key => $item) {
+            if (empty($item)) {
+                continue;
+            }
+
+			if (is_array($item)) {
+				$ret .= $this->getArrayValues($item, $glue) . $glue;
+			} else {
+				$ret .= $key . '=' . $item . $glue;
+			}
+		}
+
+		return substr($ret, 0, 0 - strlen($glue));
     }
 
     /**

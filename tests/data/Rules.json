@@ -50,7 +50,7 @@
     {
         "id":7,
         "title":"Block access to endpoint that should only accept an integer of less than 101.",
-        "rules":[{"parameter":"get.pid","match":{"type":"ctype_digit","value":false}},{"parameter":"get.pid","match":{"type":"bigger_than","value":100}}],
+        "rules":[{"parameter":"get.pid","match":{"type":"ctype_digit","value":false}},{"parameter":"get.pid","match":{"type":"more_than","value":100}}],
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
@@ -99,6 +99,14 @@
         "id":13,
         "title":"Determine if an array contains any values from given array.",
         "rules":[{"parameter":"post.usernames","match":{"type":"array_in_array","value":["test","admin"]}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":14,
+        "title":"Determine if a certain value is present anywhere in the request.",
+        "rules":[{"parameter":"all","mutations":["getArrayValues"],"match":{"type":"regex","value":"\/(\\\/something\\\/)\/msi"}}],
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
