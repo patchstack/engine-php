@@ -45,6 +45,7 @@ interface ExtensionInterface
 
     /**
      * Get the IP address of the request.
+     * Do NOT blindly rely on IP address headers which can be spoofed, such as X-Forwarded-For.
      *
      * @return string
      */

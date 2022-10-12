@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Patchstack\Request;
+use Patchstack\Extensions\Test\Extension;
 
 final class RequestTest extends TestCase
 {
@@ -26,7 +27,7 @@ final class RequestTest extends TestCase
         $_GET['something'] = 'testing123';
         $_POST['else'] = 'foobar';
 
-        $request = new Request([]);
+        $request = new Request([], new Extension());
         $this->request = $request->capture();
     }
 

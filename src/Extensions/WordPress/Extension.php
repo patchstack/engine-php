@@ -210,8 +210,14 @@ class Extension implements ExtensionInterface
 
         // Loop through all lines.
         $lines = explode("\n", $whitelist);
-        $ip    = $this->getIpAddress();
+        if (count($lines) === 0) {
+            return false;
+        }
 
+        // Grab the IP address.
+        $ip = $this->getIpAddress();
+
+        // Loop through the whitelist entries.
         foreach ($lines as $line) {
             $t = explode(':', $line);
 
@@ -259,7 +265,7 @@ class Extension implements ExtensionInterface
         }
 
         // Determine if there are any whitelist rules to process.
-        if (count($whitelistRules) == 0) {
+        if (!is_array($whitelistRules) || count($whitelistRules) == 0) {
             return false;
         }
 
@@ -307,7 +313,7 @@ class Extension implements ExtensionInterface
                         $rule = $rule->$var;
                     }
 
-                    if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isRuleMatch($rule, $request) && $isWhitelistedIp) {
+                    if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isLegacyRuleMatch($rule, $request) && $isWhitelistedIp) {
                         return true;
                     }
                 }
@@ -324,12 +330,12 @@ class Extension implements ExtensionInterface
      * @param  string|array $request
      * @return bool
      */
-    private function isRuleMatch($rule, $request)
+    private function isLegacyRuleMatch($rule, $request)
     {
         $is_matched = false;
         if (is_array($request)) {
             foreach ($request as $value) {
-                $is_matched = $this->isRuleMatch($rule, $value);
+                $is_matched = $this->isLegacyRuleMatch($rule, $value);
                 if ($is_matched) {
                     return $is_matched;
                 }
