@@ -27,7 +27,7 @@ Of course, performance is also a concern, you don't want to slow down the sites 
 
 We performed a test against the firewall engine and supplied it with 100 firewall rules. Of course, in no realistic scenario would a site have to process that many firewall rules, but it gives you an idea on what the performance impact might be.
 
-Process time: 0.00032 seconds, or about 0.32 milliseconds.
+Process time: 0.0013 seconds, or about 1.3 millisecond
 
 These numbers are subject to change slightly as we are still making optimizations and adjustments. However, compared to the previous PHP code-based firewall rules, it's 10 times faster.
 
