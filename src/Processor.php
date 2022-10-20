@@ -142,11 +142,19 @@ class Processor
             return true;
         }
 
+        // Determine if the current request is whitelisted or not (role based).
+        $isWhitelisted = $this->extension->canBypass();
+
         // Merge the rules together. First iterate through the whitelist rules.
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
         foreach ($rules as $rule) {
             // Should never happen.
             if (!isset($rule['rules']) || empty($rule['rules'])) {
+                continue;
+            }
+
+            // If this rule should respect the whitelist, we check this before we continue.
+            if (isset($rule['bypass_whitelist']) && ($rule['bypass_whitelist'] === 0 || $rule['bypass_whitelist'] === false) && $isWhitelisted) {
                 continue;
             }
 
