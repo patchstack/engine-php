@@ -374,6 +374,21 @@ class Processor
             return $this->matchParameterValue($match['match'], $value);
         }
 
+        // If the user provided value does not match the current hostname.
+        if ($matchType == 'hostname' && is_string($value)) {
+            if (empty($value)) {
+                return false;
+            }
+
+            // We only care about the hostname.
+            $host = parse_url($value, PHP_URL_HOST);
+            if (!$host) {
+                return true;
+            }
+
+            return $host !== $this->extension->getHostName();
+        }
+
         // If any of the uploaded files in the parameter matches a sub-match condition.
         if ($matchType == 'file_contains' && isset($match['match'])) {
             // Extract all tmp_names.

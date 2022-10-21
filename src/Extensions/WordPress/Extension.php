@@ -196,6 +196,17 @@ class Extension implements ExtensionInterface
     }
 
     /**
+     * Get the hostname of the environment.
+     * This is only used for open redirect vulnerabilities.
+     * 
+     * @return string
+     */
+    public function getHostName()
+    {
+        return parse_url(home_url(), PHP_URL_HOST);
+    }
+
+    /**
      * Check the custom whitelist rules defined in the backend of WordPress
      * and attempt to match it with the request.
      *

@@ -226,5 +226,24 @@ final class FirewallTest extends TestCase
         );
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
+
+        // Detect an open redirect vulnerability
+        $this->setUpFirewallProcessor([$this->rules[15]]);
+        $this->alterPayload(
+            ['GET' => [
+            'tourl' => 'https://wordpress.test/my-location/'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[15]]);
+        $this->alterPayload(
+            ['GET' => [
+            'tourl' => 'https://badsite.com'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
     }
 }

@@ -75,6 +75,17 @@ class Extension implements ExtensionInterface
     }
 
     /**
+     * Get the hostname of the environment.
+     * This is only used for open redirect vulnerabilities.
+     * 
+     * @return string
+     */
+    public function getHostName()
+    {
+        return 'wordpress.test';
+    }
+
+    /**
      * Determine if the current request is a file upload request.
      *
      * @return boolean

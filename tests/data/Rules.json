@@ -118,5 +118,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":16,
+        "title":"Determine if a URL parameter contains an open redirect vulnerability.",
+        "rules":[{"parameter":"get.tourl","match":{"type":"hostname"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

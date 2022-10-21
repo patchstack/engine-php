@@ -52,6 +52,14 @@ interface ExtensionInterface
     public function getIpAddress();
 
     /**
+     * Get the hostname of the environment.
+     * This is only used for open redirect vulnerabilities.
+     * 
+     * @return string
+     */
+    public function getHostName();
+
+    /**
      * Determine if the request should be passed without going through the firewall.
      *
      * @param array $whitelistRules
