@@ -132,7 +132,7 @@ class Processor
             return true;
         }
 
-        // Determine if we have a valid configuration password.
+        // Determine if we have a valid configuration passed.
         if (!is_array($this->firewallRules) || !is_array($this->whitelistRules)) {
             return true;
         }
@@ -158,10 +158,10 @@ class Processor
                 continue;
             }
 
-            // Transform rule object to array, then execute the firewall rule.
+            // Execute the firewall rule.
             $rule_hit = $this->executeFirewall($rule['rules']);
 
-            // If the payload did not match the rule, continue.
+            // If the payload did not match the rule, continue on to the next rule.
             if (!$rule_hit) {
                 continue;
             }

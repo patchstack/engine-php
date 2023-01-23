@@ -3,6 +3,34 @@
 This repository contains the firewall engine of Patchstack.
 It can be implemented inside of other content management systems to provide firewall functionality.
 
+## Implementation ##
+Implementation is simple, and examples can be seen in `/tests/FirewallTest.php`
+
+Example firewall rules can be seen in `/tests/data/Rules.json`
+
+Example whitelist rules can be seen in `/tests/data/Whitelist.json`
+
+```php
+use Patchstack\Processor;
+use Patchstack\Extensions\WordPress\Extension;
+
+// Load the firewall rules, whitelist rules and settings from some place.
+$firewallRules = [];
+$whitelistRules = [];
+$settings = [];
+
+// Setup the firewall rules processor.
+$firewall = new Processor(
+    new Extension(),
+    $firewallRules,
+    $whitelistRules,
+    $settings
+);
+
+// And launch it. If a request was a hit with a firewall rule, it will automatically stop execution.
+$firewall->launch();
+```
+
 ## Functionality ##
 This firewall engine can parse and understand JSON based firewall rules. These JSON based firewall rules allow you to match against parameters, match against multiple conditions being true, apply mutations (e.g., JSON decode or base64 decode) to payloads and compare against output of PHP functions.
 
