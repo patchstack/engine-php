@@ -126,5 +126,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":17,
+        "title":"Block Social Warfare Vulnerability",
+        "rules":[{"parameter":"get.swp_debug","match":{"type":"equals","value":"load_options"},"inclusive":true},{"parameter":false,"match":{"type":"current_user_cannot","value":"administrator"},"inclusive":true}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

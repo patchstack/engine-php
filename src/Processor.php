@@ -132,7 +132,7 @@ class Processor
             return true;
         }
 
-        // Determine if we have a valid configuration passed.
+        // Determine if the firewall and whitelist rules were parsed properly.
         if (!is_array($this->firewallRules) || !is_array($this->whitelistRules)) {
             return true;
         }
@@ -220,7 +220,7 @@ class Processor
 
             // Extract the value of the paramater that we want.
             $value = $this->request->getParameterValue($rule['parameter']);
-            if (is_null($value)) {
+            if (is_null($value) && $rule['parameter'] !== false) {
                 continue;
             }
 

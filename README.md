@@ -100,8 +100,8 @@ Check if an array ($_POST['usernames'][]) contains any values from given array.
         "match":{
             "type":"array_in_array",
             "value":[
-            "test",
-            "admin"
+                "test",
+                "admin"
             ]
         }
     }
@@ -116,7 +116,7 @@ Check if a value ($_GET['user']) is not in an array
         "match":{
             "type":"not_in_array",
             "value":[
-            "admin"
+                "admin"
             ]
         }
     }
@@ -203,8 +203,8 @@ Check if $_POST['payload'] contains a base64(json()) encoded payload with user_r
             "type":"array_key_value",
             "key":"user_role",
             "match":{
-            "type":"equals",
-            "value":"administrator"
+                "type":"equals",
+                "value":"administrator"
             }
         }
     }
@@ -218,24 +218,24 @@ Check if $_GET['action'] or $_POST['action'] contains a value part of an array o
         "parameter":"rules",
         "rules":[
             {
-            "parameter":"get.action",
-            "match":{
-                "type":"in_array",
-                "value":[
-                    "restaurant_system_customize_button",
-                    "restaurant_system_insert_dialog"
-                ]
-            }
+                "parameter":"get.action",
+                "match":{
+                    "type":"in_array",
+                    "value":[
+                        "restaurant_system_customize_button",
+                        "restaurant_system_insert_dialog"
+                    ]
+                }
             },
             {
-            "parameter":"post.action",
-            "match":{
-                "type":"in_array",
-                "value":[
-                    "restaurant_system_customize_button",
-                    "restaurant_system_insert_dialog"
-                ]
-            }
+                "parameter":"post.action",
+                "match":{
+                    "type":"in_array",
+                    "value":[
+                        "restaurant_system_customize_button",
+                        "restaurant_system_insert_dialog"
+                    ]
+                }
             }
         ],
         "inclusive":true
@@ -260,7 +260,7 @@ Note that the server.ip parameter is a special computed property and retrieves t
         "match":{
             "type":"in_array",
             "value":[
-            "127.0.0.1"
+                "127.0.0.1"
             ]
         }
     }
@@ -291,10 +291,33 @@ Check if an uploaded file ($_FILES['img']) contains the PHP opening tag in the c
         "match":{
             "type":"file_contains",
             "match":{
-            "type":"contains",
-            "value":"<?php"
+                "type":"contains",
+                "value":"<?php"
             }
         }
+    }
+]
+```
+
+Check if the swp_debug parameter is set to load_options and the current user is not an administrator.
+https://patchstack.com/database/vulnerability/social-warfare/wordpress-social-warfare-plugin-3-5-2-unauthenticated-remote-code-execution-rce-vulnerability
+```json
+[
+    {
+        "parameter":"get.swp_debug",
+        "match":{
+            "type":"equals",
+            "value":"load_options"
+        },
+        "inclusive":true
+    },
+    {
+        "parameter":false,
+        "match":{
+            "type":"current_user_cannot",
+            "value":"administrator"
+        },
+        "inclusive":true
     }
 ]
 ```
