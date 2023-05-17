@@ -45,7 +45,8 @@ class Processor
         'autoblockAttempts' => 10,
         'autoblockMinutes' => 30,
         'autoblockTime' => 60,
-        'whitelistKeysRules' => []
+        'whitelistKeysRules' => [],
+        'mustUsePluginCall' => false
     ];
 
     /**
@@ -122,13 +123,17 @@ class Processor
     public function launch($mustExit = true)
     {
         // Determine if the user is temporarily blocked from the site before we do anything else.
-        if ($this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && !$this->extension->canBypass()) {
+        if (
+            $this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && (
+                $this->mustUsePluginCall || (!$this->mustUsePluginCall && !$this->extension->canBypass())
+            )
+        ) {
             $this->extension->forceExit(22);
         }
 
         // Check for whitelist based on the legacy whitelist rules.
         $request  = $this->request->capture();
-        if ($this->extension->isWhitelisted($this->whitelistRulesLegacy, $request)) {
+        if (!$this->mustUsePluginCall && $this->extension->isWhitelisted($this->whitelistRulesLegacy, $request)) {
             return true;
         }
 
@@ -143,7 +148,7 @@ class Processor
         }
 
         // Determine if the current request is whitelisted or not (role based).
-        $isWhitelisted = $this->extension->canBypass();
+        $isWhitelisted = !$this->mustUsePluginCall && $this->extension->canBypass();
 
         // Merge the rules together. First iterate through the whitelist rules.
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
@@ -155,6 +160,12 @@ class Processor
 
             // If this rule should respect the whitelist, we check this before we continue.
             if (isset($rule['bypass_whitelist']) && ($rule['bypass_whitelist'] === 0 || $rule['bypass_whitelist'] === false) && $isWhitelisted) {
+                continue;
+            }
+
+            // If the rule contains matching type we cannot call during mu-plugins, skip.
+            $hasWpAction = $this->hasWpAction($rule['rules']);
+            if (defined('PS_FW_MU_RAN') && !$hasWpAction || $this->mustUsePluginCall && $hasWpAction) {
                 continue;
             }
 
@@ -187,7 +198,7 @@ class Processor
         }
 
         // Run the legacy firewall rules processor for backwards compatibility.
-        if (count($this->firewallRulesLegacy) > 0) {
+        if (count($this->firewallRulesLegacy) > 0 && !$this->mustUsePluginCall) {
             $this->launchLegacy(true, $request, $this->extension->getIpAddress());
         }
 
@@ -220,7 +231,7 @@ class Processor
 
             // Extract the value of the paramater that we want.
             $value = $this->request->getParameterValue($rule['parameter']);
-            if (is_null($value) && $rule['parameter'] !== false) {
+            if (is_null($value) && $rule['parameter'] !== false && $rule['parameter'] != 'rules') {
                 continue;
             }
 
@@ -349,7 +360,7 @@ class Processor
         }
 
         // If the user does not have a WP privilege.
-        if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can')) {
+        if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can') && !$this->mustUsePluginCall) {
             return @!current_user_can($matchValue);
         }
 
@@ -378,6 +389,11 @@ class Processor
         if ($matchType == 'hostname' && is_string($value)) {
             if (empty($value)) {
                 return false;
+            }
+
+            // If there's no protocol we add it.
+            if (substr($value, 0, 4) != 'http') {
+                $value = 'https://' . $value;
             }
 
             // We only care about the hostname.
@@ -420,6 +436,35 @@ class Processor
 
             // Now attempt to match it.
             return $this->matchParameterValue($match['match'], $contents);
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the rules contain an action that should not be executed under the mu-plugins context.
+     * 
+     * @param array $rules
+     * @return boolean
+     */
+    private function hasWpAction($rules)
+    {
+        $functions = ['current_user_cannot'];
+
+        if (isset($rules['rules'])) {
+            if ($this->hasWpAction($rules['rules'])) {
+                return true;
+            }
+        }
+
+        foreach ($rules as $rule) {
+            if (!isset($rule['match'], $rule['match']['type'])) {
+                continue;
+            }
+
+            if (in_array($rule['match']['type'], $functions)) {
+                return true;
+            }
         }
 
         return false;
