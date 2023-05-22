@@ -256,7 +256,7 @@ class Processor
                 // Is the rule a match?
                 if ($match) {
                     // In case there are multiple rules, they may require chained AND conditions.
-                    if ($inclusiveCount <= 1) {
+                    if ($inclusiveCount <= 1 || !isset($rule['inclusive']) || $rule['inclusive'] !== true) {
                         return true;
                     } else {
                         $inclusiveHits++;
