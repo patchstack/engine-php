@@ -334,6 +334,12 @@ class Processor
             return true;
         }
 
+        // If a scalar is a ctype alnum with underscores, dashes and spaces.
+        if ($matchType == 'ctype_special' && is_scalar($value)) {
+            $value = str_replace([' ', '_', '-'], '', $value);
+            return @ctype_alnum($value) === $matchValue;
+        }
+
         // If a scaler is a ctype digit.
         if ($matchType == 'ctype_digit' && is_scalar($value)) {
             return @ctype_digit($value) === $matchValue;
