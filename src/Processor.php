@@ -147,11 +147,14 @@ class Processor
             return true;
         }
 
-        // Determine if the current request is whitelisted or not (role based).
+        // Determine if the current request is whitelisted or not.
         $isWhitelisted = !$this->mustUsePluginCall && $this->extension->canBypass();
 
-        // Merge the rules together. First iterate through the whitelist rules.
+        // Merge the rules together. First iterate through the whitelist rules because
+        // we want to whitelist the request if there's a whitelist rule match.
         $rules = array_merge($this->whitelistRules, $this->firewallRules);
+
+        // Iterate through all the firewall rules.
         foreach ($rules as $rule) {
             // Should never happen.
             if (!isset($rule['rules']) || empty($rule['rules'])) {
@@ -230,36 +233,44 @@ class Processor
             }
 
             // Extract the value of the paramater that we want.
-            $value = $this->request->getParameterValue($rule['parameter']);
-            if (is_null($value) && $rule['parameter'] !== false && $rule['parameter'] != 'rules') {
+            $values = $this->request->getParameterValues($rule['parameter']);
+            if (is_null($values) && $rule['parameter'] !== false && $rule['parameter'] != 'rules') {
                 continue;
             }
 
-            // Apply mutations, if any.
-            if (isset($rule['mutations']) && is_array($rule['mutations'])) {
-                $value = $this->request->applyMutation($rule['mutations'], $value);
-                if (is_null($value)) {
-                    continue;
-                }
+            // For special parameter values we just set the array to a single null value.
+            if ($rule['parameter'] === false || $rule['parameter'] == 'rules') {
+                $values = [null];
             }
 
-            // Perform the matching.
-            if (isset($rule['match']) && is_array($rule['match']) || isset($rule['rules'])) {
-
-                // Do we have to process child-rules?
-                if (isset($rule['rules'])) {
-                    $match = $this->executeFirewall($rule['rules']);
-                } else {
-                    $match = $this->matchParameterValue($rule['match'], $value);
+            // For all field matches, we want to execute the rule against it.
+            foreach ($values as $value) {
+                // Apply mutations, if any.
+                if (isset($rule['mutations']) && is_array($rule['mutations'])) {
+                    $value = $this->request->applyMutation($rule['mutations'], $value);
+                    if (is_null($value)) {
+                        continue;
+                    }
                 }
 
-                // Is the rule a match?
-                if ($match) {
-                    // In case there are multiple rules, they may require chained AND conditions.
-                    if ($inclusiveCount <= 1 || !isset($rule['inclusive']) || $rule['inclusive'] !== true) {
-                        return true;
+                // Perform the matching.
+                if (isset($rule['match']) && is_array($rule['match']) || isset($rule['rules'])) {
+
+                    // Do we have to process child-rules?
+                    if (isset($rule['rules'])) {
+                        $match = $this->executeFirewall($rule['rules']);
                     } else {
-                        $inclusiveHits++;
+                        $match = $this->matchParameterValue($rule['match'], $value);
+                    }
+
+                    // Is the rule a match?
+                    if ($match) {
+                        // In case there are multiple rules, they may require chained AND conditions.
+                        if ($inclusiveCount <= 1 || !isset($rule['inclusive']) || $rule['inclusive'] !== true) {
+                            return true;
+                        } else {
+                            $inclusiveHits++;
+                        }
                     }
                 }
             }
@@ -387,8 +398,13 @@ class Processor
 
         // If a specific parameter key matches a sub-match condition.
         if ($matchType == 'array_key_value' && isset($match['key'], $match['match'])) {
-            $value = $this->request->getParameterValue($match['key'], $value);
-            return $this->matchParameterValue($match['match'], $value);
+            $values = $this->request->getParameterValues($match['key'], $value);
+            foreach ($values as $value) {
+                if ($this->matchParameterValue($match['match'], $value)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // If the user provided value does not match the current hostname.

@@ -37,9 +37,9 @@ class Request
      * 
      * @param mixed $parameter
      * @param array $data
-     * @return mixed|null
+     * @return mixed
      */
-    public function getParameterValue($parameter, $data = [])
+    public function getParameterValues($parameter, $data = [])
     {
         // For when a rule contains sub-rules.
         if (empty($parameter) || ctype_digit($parameter)) {
@@ -60,7 +60,7 @@ class Request
                     'post' => $_POST,
                     'get' => $_GET,
                     'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
-                    'raw' => ['raw' => $this->getParameterValue('raw')]
+                    'raw' => ['raw' => $this->getParameterValues('raw')]
                 ];
                 break;
             case 'post':
@@ -109,7 +109,7 @@ class Request
 
                 // If it's not an array, no need to continue.
                 if (!is_array($data)) {
-                    return $data;
+                    return [$data];
                 }
             default:
                 break;
@@ -122,12 +122,20 @@ class Request
 
         // Special condition for the IP address.
         if ($type === 'server' && $t[0] === 'ip') {
-            return $this->extension->getIpAddress();
+            return [$this->extension->getIpAddress()];
+        }
+
+        // For wildcard matching we handle it a bit differently.
+        // We want to extract all wildcard matches and pass them as an array so we
+        // can execute a firewall rule against all the fields that match.
+        if (strpos($parameter, '*') !== false) {
+            $values = $this->getValuesByWildcard($data, $parameter);
+            return count($values) == 0 ? null : $values;
         }
 
         // Just one parameter we have to match against.
         if (count($t) === 1) {
-            return isset($data[$t[0]]) ? $data[$t[0]] : null;
+            return isset($data[$t[0]]) ? [$data[$t[0]]] : null;
         }
 
         // For multidimensional arrays.
@@ -141,7 +149,7 @@ class Request
             $end = $end[ $var ];
         }
 
-        return $skip ? null : $end;
+        return $skip ? null : [$end];
     }
 
    /**
@@ -217,6 +225,52 @@ class Request
         }
 
         return $value;
+    }
+
+    /**
+     * Given an array, get all parameters which match a certain wildcard.
+     * 
+     * @param array $data
+     * @param string $parameter
+     * @return array
+     */
+    public function getValuesByWildcard($data, $parameter)
+    {
+        // First we want to get the furthest possible down.
+        $t = explode('.', $parameter);
+        array_shift($t);
+        $end  = $data;
+        $wildcard = '';
+        foreach ( $t as $var ) {
+            
+            // We hit the wildcard.
+            if (strpos($var, '*') !== false) {
+                $wildcard = str_replace('*', '', $var);
+                break;
+            }
+            
+            // We're not at the end and there's no wildcard.
+            if (!isset( $end[ $var ] ) && strpos($var, '*') === false) {
+                return [];
+            }
+
+            $end = $end[ $var ];
+        }
+        
+        // No need to continue if there is nothing to match.
+        if (!is_array($end) || count($end) == 0) {
+            return [];
+        }
+
+        // Based on the data that is left, find the wildcard matches.
+        $return = [];
+        foreach ($end as $key => $value) {
+            if (stripos($key, $wildcard) !== false) {
+                $return[] = $value;
+            }
+        }
+        
+        return $return;
     }
 
     /**

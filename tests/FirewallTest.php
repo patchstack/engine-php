@@ -245,5 +245,57 @@ final class FirewallTest extends TestCase
         );
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
+
+        // Determine if a POST parameter is not a ctype_alnum.
+        $this->setUpFirewallProcessor([$this->rules[17]]);
+        $this->alterPayload(
+            ['POST' => [
+            'value' => 'something_-0-9 '
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[17]]);
+        $this->alterPayload(
+            ['POST' => [
+            'value' => 'sleep(5), id'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+//post.user.role.type*
+        // Determine if a POST parameter (using wildcard) contains a certain character.
+        $this->setUpFirewallProcessor([$this->rules[18]]);
+        $this->alterPayload(
+            ['POST' => [
+            'user' => [
+                'test' => 'test',
+                'role' => [
+                    'test' => 'test',
+                    'type1' => 'subscriber',
+                    'type2' => 'editor'
+                ]
+            ]
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[18]]);
+        $this->alterPayload(
+            ['POST' => [
+            'user' => [
+                'test' => 'test',
+                'role' => [
+                    'test' => 'test',
+                    'type1' => 'editor',
+                    'type5' => 'administrator'
+                ]
+            ]
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
     }
 }

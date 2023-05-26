@@ -134,5 +134,21 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":18,
+        "title":"Determine if a POST parameter is a ctype_special.",
+        "rules":[{"parameter":"post.value","match":{"type":"ctype_special","value":false}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":19,
+        "title":"Determine if a POST parameter (using wildcard) contains a certain character.",
+        "rules":[{"parameter":"post.user.role.type*","match":{"type":"contains","value":"administrator"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]
