@@ -74,10 +74,10 @@ class Extension implements ExtensionInterface
         }
 
         // Determine where to get the POST payload from.
-        if (!isset($request['rulesRawPost']) || empty($request['rulesRawPost'])) {
-            $postData = count($_POST) == 0 ? null : json_encode($_POST);
+        if (!isset($request['raw']) || empty($request['raw'])) {
+            $postData = count($request['post']) == 0 ? null : json_encode($request['post']);
         } else {
-            $postData = $request['rulesRawPost'];
+            $postData = is_array($request['raw']) ? json_encode($request['raw'][0]) : $request['raw'];
         }
 
         // Insert into the logs.

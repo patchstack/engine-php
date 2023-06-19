@@ -16,25 +16,11 @@ class Processor
     private $firewallRules = [];
 
     /**
-     * The legacy firewall rules to process.
-     *
-     * @var array
-     */
-    private $firewallRulesLegacy = [];
-
-    /**
      * The whitelist rules to process.
      *
      * @var array
      */
     private $whitelistRules = [];
-
-    /**
-     * The legacy whitelist rules to process.
-     *
-     * @var array
-     */
-    private $whitelistRulesLegacy = [];
 
     /**
      * The options of the engine.
@@ -77,24 +63,18 @@ class Processor
      * @param array $firewallRules
      * @param array $whitelistRules
      * @param array $options
-     * @param array $firewallRulesLegacy
-     * @param array $whitelistRulesLegacy
      * @return void
      */
     public function __construct(
         ExtensionInterface $extension,
         $firewallRules = [],
         $whitelistRules = [],
-        $options = [],
-        $firewallRulesLegacy = [],
-        $whitelistRulesLegacy = []
+        $options = []
     ) {
         $this->extension = $extension;
         $this->firewallRules = $firewallRules;
         $this->whitelistRules = $whitelistRules;
         $this->options = array_merge($this->options, $options);
-        $this->firewallRulesLegacy = $firewallRulesLegacy;
-        $this->whitelistRulesLegacy = $whitelistRulesLegacy;
 
         $this->request = new Request($this->options, $this->extension);
         $this->response = new Response($this->options);
@@ -129,12 +109,6 @@ class Processor
             )
         ) {
             $this->extension->forceExit(22);
-        }
-
-        // Check for whitelist based on the legacy whitelist rules.
-        $request  = $this->request->capture();
-        if (!$this->mustUsePluginCall && $this->extension->isWhitelisted($this->whitelistRulesLegacy, $request)) {
-            return true;
         }
 
         // Determine if the firewall and whitelist rules were parsed properly.
@@ -180,9 +154,14 @@ class Processor
                 continue;
             }
 
+            // Capture the POST data for logging purposes.
+            if ($rule['type'] != 'WHITELIST') {
+                $postData = $this->request->getParameterValues('log');
+            }
+
             // Determine what action to perform.
             if ($rule['type'] == 'BLOCK') {
-                $this->extension->logRequest($rule['id'], $request, 'BLOCK');
+                $this->extension->logRequest($rule['id'], $postData, 'BLOCK');
 
                 // Do we have to exit the page or simply return false?
                 if ($mustExit) {
@@ -191,18 +170,13 @@ class Processor
                     return false;
                 }
             } elseif ($rule['type'] == 'LOG') {
-                $this->extension->logRequest($rule['id'], $request, 'LOG');
+                $this->extension->logRequest($rule['id'], $postData, 'LOG');
             } elseif ($rule['type'] == 'REDIRECT') {
-                $this->extension->logRequest($rule['id'], $request, 'REDIRECT');
+                $this->extension->logRequest($rule['id'], $postData, 'REDIRECT');
                 $this->response->redirect($rule['type_params'], $mustExit);
             } elseif ($rule['type'] == 'WHITELIST') {
                 return $mustExit;
             }
-        }
-
-        // Run the legacy firewall rules processor for backwards compatibility.
-        if (count($this->firewallRulesLegacy) > 0 && !$this->mustUsePluginCall) {
-            $this->launchLegacy(true, $request, $this->extension->getIpAddress());
         }
 
         return true;
@@ -490,136 +464,5 @@ class Processor
         }
 
         return false;
-    }
-
-    /**
-     * The legacy firewall processor will only iterate over the general legacy firewall rules.
-     * Will return true if $mustExit is false and all of the rules were processed without a positive detection.
-     *
-     * @param boolean $mustExit
-     * @param array $request
-     * @param string $ip
-     * @return boolean
-     */
-    public function launchLegacy($mustExit = true, $request = [], $ip = '')
-    {
-        // Obtain the IP address and request data if it has not been supplied yet.
-        $client_ip = $ip == '' ? $this->extension->getIpAddress() : $ip;
-        $requests  = count($request) == 0 ? $this->request->capture() : $request;
-
-        // The request parameter values exploded into pairs.
-        $requestParams = [
-            'method' => 'method',
-            'rulesFile' => 'rules->file',
-            'rulesRawPost' => 'rules->raw->post',
-            'rulesUri' => 'rules->uri',
-            'rulesHeadersAll' => 'rules->headers->all',
-            'rulesHeadersKeys' => 'rules->headers->keys',
-            'rulesHeadersValues' => 'rules->headers->values',
-            'rulesHeadersCombinations' => 'rules->headers->combinations',
-            'rulesBodyAll' => 'rules->body->all',
-            'rulesBodyKeys' => 'rules->body->keys',
-            'rulesBodyValues' => 'rules->body->values',
-            'rulesBodyCombinations' => 'rules->body->combinations',
-            'rulesParamsAll' => 'rules->params->all',
-            'rulesParamsKeys' => 'rules->params->keys',
-            'rulesParamsValues' => 'rules->params->values',
-            'rulesParamsCombinations' => 'rules->params->combinations'
-        ];
-
-        // Iterate through all root objects.
-        foreach ($this->firewallRulesLegacy as $firewall_rule) {
-            $rule_terms = json_decode($firewall_rule['rule']);
-
-            // Determine if we should match the IP address.
-            $ip = isset($rule_terms->rules->ip_address) ? $rule_terms->rules->ip_address : null;
-            if (!is_null($ip)) {
-                $matched_ip = false;
-                if (strpos($ip, '*') !== false) {
-                    $matched_ip = $this->plugin->ban->check_wildcard_rule($client_ip, $ip);
-                } elseif (strpos($ip, '-') !== false) {
-                    $matched_ip = $this->plugin->ban->check_range_rule($client_ip, $ip);
-                } elseif (strpos($ip, '/') !== false) {
-                    $matched_ip = $this->plugin->ban->check_subnet_mask_rule($client_ip, $ip);
-                } elseif ($client_ip == $ip) {
-                    $matched_ip = true;
-                }
-
-                if (!$matched_ip) {
-                    continue;
-                }
-            }
-
-            // Loop through all request data that we captured.
-            foreach ($requests as $key => $request) {
-                // Treat the raw POST data string as the body contents of all values combined.
-                if ($key == 'rulesRawPost') {
-                    $key = 'rulesBodyAll';
-                }
-
-                // Determine if the requesting method matches.
-                if ($rule_terms->method == $requests['method'] || $rule_terms->method == 'ALL' || $rule_terms->method == 'GET' || ($rule_terms->method == 'FILES' && $this->extension->isFileUploadRequest())) {
-                    if (!isset($requestParams[$key])) {
-                        continue;
-                    }
-                    $exp  = explode('->', $requestParams[$key]);
-
-                    // Determine if a rule exists for this request.
-                    $rule = $rule_terms;
-                    foreach ($exp as $var) {
-                        if (!isset($rule->$var)) {
-                            $rule = null;
-                            continue;
-                        }
-                        $rule = $rule->$var;
-                    }
-
-                    // Determine if the rule matches the request.
-                    if (!is_null($rule) && substr($key, 0, 4) == 'rule' && $this->isLegacyRuleMatch($rule, $request)) {
-                        if ($rule_terms->type == 'BLOCK') {
-                            $this->extension->logRequest($firewall_rule['id'], $request, 'BLOCK');
-
-                            // Do we have to exit the page or simply return false?
-                            if ($mustExit) {
-                                $this->extension->forceExit($firewall_rule['id']);
-                            } else {
-                                return false;
-                            }
-                        } elseif ($rule_terms->type == 'LOG') {
-                            $this->extension->logRequest($firewall_rule['id'], $request, 'LOG');
-                        } elseif ($rule_terms->type == 'REDIRECT') {
-                            $this->extension->logRequest($firewall_rule['id'], $request, 'REDIRECT');
-                            $this->response->redirect($rule_terms->type_params, $mustExit);
-                        }
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Determine if the request matches the given firewall or whitelist rule.
-     *
-     * @param string $rule
-     * @param string|array $request
-     * @return bool
-     */
-    private function isLegacyRuleMatch($rule, $request)
-    {
-        $is_matched = false;
-        if (is_array($request)) {
-            foreach ($request as $value) {
-                $is_matched = $this->isLegacyRuleMatch($rule, $value);
-                if ($is_matched) {
-                    return $is_matched;
-                }
-            }
-        } else {
-            return preg_match($rule, urldecode($request));
-        }
-
-        return $is_matched;
     }
 }
