@@ -26,9 +26,7 @@ final class RequestTest extends TestCase
 
         $_GET['something'] = 'testing123';
         $_POST['else'] = 'foobar';
-
-        $request = new Request([], new Extension());
-        $this->request = $request->capture();
+        $this->request = new Request([], new Extension());
     }
 
     /**
@@ -36,31 +34,23 @@ final class RequestTest extends TestCase
      */
     public function testRequestCaptureHeaders()
     {
-        // Test for HTTP user agent.
-        foreach ($this->request['rulesHeadersCombinations'] as $header) {
-            if (stripos($header, 'User-Agent:') !== false) {
-                $this->assertTrue($header == 'User-Agent: This is a user agent');
-            }
-        }
+        $value = $this->request->getParameterValues('server.HTTP_USER_AGENT')[0];
+        $this->assertTrue($value == 'This is a user agent');
 
         // Test for the requesting URL.
-        $this->assertTrue($this->request['rulesUri'] == '/somepage.php');
+        $value = $this->request->getParameterValues('server.REQUEST_URI')[0];
+        $this->assertTrue($value == '/somepage.php');
 
         // Test for the requesting method.
-        $this->assertTrue($this->request['method'] == 'GET');
+        $value = $this->request->getParameterValues('server.REQUEST_METHOD')[0];
+        $this->assertTrue($value == 'GET');
 
         // Test for URL query parameter.
-        foreach ($this->request['rulesParamsCombinations'] as $parameter) {
-            if (stripos($parameter, 'something=') !== false) {
-                $this->assertTrue($parameter == 'something=testing123');
-            }
-        }
+        $value = $this->request->getParameterValues('get.something')[0];
+        $this->assertTrue($value == 'testing123');
 
         // Test for POST payload parameter.
-        foreach ($this->request['rulesBodyCombinations'] as $parameter) {
-            if (stripos($parameter, 'something=') !== false) {
-                $this->assertTrue($parameter == 'else=foobar');
-            }
-        }
+        $value = $this->request->getParameterValues('post.else')[0];
+        $this->assertTrue($value == 'foobar');
     }
 }
