@@ -264,7 +264,7 @@ final class FirewallTest extends TestCase
         );
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
-//post.user.role.type*
+
         // Determine if a POST parameter (using wildcard) contains a certain character.
         $this->setUpFirewallProcessor([$this->rules[18]]);
         $this->alterPayload(
@@ -293,6 +293,25 @@ final class FirewallTest extends TestCase
                     'type5' => 'administrator'
                 ]
             ]
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Determine if a POST parameter does not contain a substring.
+        $this->setUpFirewallProcessor([$this->rules[19]]);
+        $this->alterPayload(
+            ['POST' => [
+            'what' => 'myteststring'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[19]]);
+        $this->alterPayload(
+            ['POST' => [
+            'what' => 'myvalidstring'
             ]]
         );
         $this->assertFalse($this->processor->launch(false));

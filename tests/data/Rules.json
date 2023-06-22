@@ -150,5 +150,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":20,
+        "title":"Determine if a POST parameter does not contain a substring.",
+        "rules":[{"parameter":"post.what","match":{"type":"not_contains","value":"test"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

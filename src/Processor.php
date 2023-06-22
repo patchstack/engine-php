@@ -345,6 +345,11 @@ class Processor
             return @stripos($value, $matchValue) !== false;
         }
 
+        // If a scalar does not contain a value.
+        if ($matchType == 'not_contains' && is_scalar($value)) {
+            return @stripos($value, $matchValue) === false;
+        }
+
         // If a string matches a regular expression.
         if ($matchType == 'regex' && is_string($matchValue) && is_scalar($value)) {
             return @preg_match($matchValue, @urldecode($value)) === 1;
