@@ -104,9 +104,7 @@ class Processor
     {
         // Determine if the user is temporarily blocked from the site before we do anything else.
         if (
-            $this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && (
-                $this->mustUsePluginCall || (!$this->mustUsePluginCall && !$this->extension->canBypass())
-            )
+            $this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && !$this->extension->canBypass($this->mustUsePluginCall)
         ) {
             $this->extension->forceExit(22);
         }
@@ -122,7 +120,7 @@ class Processor
         }
 
         // Determine if the current request is whitelisted or not.
-        $isWhitelisted = !$this->mustUsePluginCall && $this->extension->canBypass();
+        $isWhitelisted = $this->extension->canBypass($this->mustUsePluginCall);
 
         // Merge the rules together. First iterate through the whitelist rules because
         // we want to whitelist the request if there's a whitelist rule match.

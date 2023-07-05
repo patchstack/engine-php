@@ -21,10 +21,13 @@ class Extension implements ExtensionInterface
 
     /**
      * Determine if the current visitor can bypass the firewall.
+     * If $isMuCall is true, we MUST avoid any function calls that checks the current authorization of the user,
+     * this includes current_user_can. Otherwise, a fatal error is thrown.
      *
+     * @param bool $isMuCall
      * @return bool
      */
-    public function canBypass()
+    public function canBypass($isMuCall)
     {
         return false;
     }
