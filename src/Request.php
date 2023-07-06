@@ -196,6 +196,10 @@ class Request
             'getArrayValues' => [
                 'args' => [],
                 'type' => 'is_array'
+            ],
+            'getShortcodeAtts' => [
+                'args' => [],
+                'type' => 'is_string'
             ]
         ];
 
@@ -217,6 +221,8 @@ class Request
                 // Call the function with given arguments.
                 if ($mutation == 'getArrayValues') {
                     $value = $this->getArrayValues($value);
+                } elseif ($mutation == 'getShortcodeAtts') {
+                    $value = $this->getShortcodeAtts($value);
                 } else {
                     $value = call_user_func_array($mutation, array_merge([$value], $allowed[$mutation]['args']));
                 }
@@ -322,5 +328,56 @@ class Request
         }
 
         return $ret;
+    }
+
+    /**
+     * Given a string, fetch all shortcodes and its attributes.
+     * 
+     * @param string $value
+     * @return array
+     */
+    public function getShortcodeAtts($value)
+    {
+        // For rare cases where this may not be defined.
+        if (!function_exists('shortcode_parse_atts')) {
+            return [];
+        }
+
+        // The regular expression used by WordPress core to fetch shortcodes and its attributes.
+        preg_match_all(
+            '/\[(\[?)(.*?)(?![\w-])([^\]\/]*(?:\/(?!\])[^\]\/]*)*?)(?:(\/)\]|\](?:([^\[]*+(?:\[(?!\/\2\])[^\[]*+)*+)\[\/\2\])?)(\]?)/',
+            $value,
+            $shortcodes,
+            PREG_SET_ORDER
+        );
+
+        // No matches.
+        if (count($shortcodes) == 0) {
+            return [];
+        }
+
+        // Iterate through all shortcodes and fetch their attributes.
+        $return = [];
+        foreach ($shortcodes as $shortcode) {
+            if (!isset($shortcode[2], $shortcode[3], $shortcode[5])) {
+                continue;
+            }
+
+            // Merge together if the shortcode occurs more than once.
+            if (isset($return[$shortcode[2]])) {
+                $atts = @shortcode_parse_atts($shortcode[3]);
+                foreach ($atts as $key => $value) {
+                    if (isset($return[$shortcode[2]][$key])) {
+                        $return[$shortcode[2]][$key] .= $value;
+                    } else {
+                        $return[$shortcode[2]][$key] = $value;
+                    }
+                }
+            } else {
+                $return[$shortcode[2]] = @shortcode_parse_atts($shortcode[3]);
+            }
+        }
+
+        return $return; 
     }
 }

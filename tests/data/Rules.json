@@ -158,5 +158,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":21,
+        "title":"Block a specific WordPress shortcode attribute from containing a bad value.",
+        "rules":[{"parameter":"post.content","mutations":["getShortcodeAtts"],"match":{"type":"array_key_value","key":"learn_press_featured_courses.order","match":{"type":"contains","value":")"}}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

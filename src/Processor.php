@@ -376,6 +376,10 @@ class Processor
         // If a specific parameter key matches a sub-match condition.
         if ($matchType == 'array_key_value' && isset($match['key'], $match['match'])) {
             $values = $this->request->getParameterValues($match['key'], $value);
+            if (!is_array($values)) {
+                return false;
+            }
+
             foreach ($values as $value) {
                 if ($this->matchParameterValue($match['match'], $value)) {
                     return true;
