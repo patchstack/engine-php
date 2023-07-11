@@ -348,6 +348,11 @@ class Processor
             return @stripos($value, $matchValue) === false;
         }
 
+        // If a scalar contains single or double quotes.
+        if (($matchType == 'quotes' || $matchType == 'inline_js_xss') && is_scalar($value)) {
+            return @stripos($value, '"') !== false || @stripos($value, "'") !== false;
+        }
+
         // If a string matches a regular expression.
         if ($matchType == 'regex' && is_string($matchValue) && is_scalar($value)) {
             return @preg_match($matchValue, @urldecode($value)) === 1;
@@ -400,7 +405,7 @@ class Processor
             }
 
             // We only care about the hostname.
-            $host = parse_url($value, PHP_URL_HOST);
+            $host = @parse_url($value, PHP_URL_HOST);
             if (!$host) {
                 return true;
             }
@@ -439,6 +444,24 @@ class Processor
 
             // Now attempt to match it.
             return $this->matchParameterValue($match['match'], $contents);
+        }
+
+        // If a scalar passes a run through wp_kses_post.
+        if ($matchType == 'general_xss' && is_scalar($value) && function_exists('wp_kses_post')) {
+            return $value != @wp_kses_post($value);
+        }
+
+        // If a scalar passes a run through inline_js_xss.
+        if ($matchType == 'inline_xss' && is_scalar($value)) {
+            if (@stripos($value, '"') === false && @stripos($value, "'") === false) {
+                return false;
+            }
+        
+            if (@stripos($value, '>') !== false || @stripos($value, '=') !== false) {
+                return true;
+            }
+        
+            return false;
         }
 
         return false;

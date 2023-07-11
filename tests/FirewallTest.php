@@ -376,5 +376,43 @@ final class FirewallTest extends TestCase
         );
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
+
+        // Block a parameter from containing single or double quotes.
+        $this->setUpFirewallProcessor([$this->rules[21]]);
+        $this->alterPayload(
+            ['GET' => [
+            'search' => 'This is a valid string without quotes.'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[21]]);
+        $this->alterPayload(
+            ['GET' => [
+            'search' => 'This contains single \' and double " quotes.'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
+
+        // Block a parameter from containing single or double quotes.
+        $this->setUpFirewallProcessor([$this->rules[22]]);
+        $this->alterPayload(
+            ['GET' => [
+            'search' => 'This is a valid search "string".'
+            ]]
+        );
+        $this->assertTrue($this->processor->launch(false));
+        $this->alterPayload();
+
+        $this->setUpFirewallProcessor([$this->rules[22]]);
+        $this->alterPayload(
+            ['GET' => [
+            'search' => '" onmouseover="alert(1)"'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
+        $this->alterPayload();
     }
 }

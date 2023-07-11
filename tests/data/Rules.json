@@ -166,5 +166,21 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":22,
+        "title":"Block search parameter containing single or double quotes.",
+        "rules":[{"parameter":"get.search","match":{"type":"quotes"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
+    },
+    {
+        "id":23,
+        "title":"Block search parameter containing an inline HTML injection.",
+        "rules":[{"parameter":"get.search","match":{"type":"inline_xss"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]
