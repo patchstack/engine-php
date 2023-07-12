@@ -365,7 +365,7 @@ class Request
 
             // Merge together if the shortcode occurs more than once.
             if (isset($return[$shortcode[2]])) {
-                $atts = @shortcode_parse_atts($shortcode[3]);
+                $atts = @\shortcode_parse_atts($shortcode[3]);
                 foreach ($atts as $key => $value) {
                     if (isset($return[$shortcode[2]][$key])) {
                         $return[$shortcode[2]][$key] .= $value;
@@ -374,7 +374,7 @@ class Request
                     }
                 }
             } else {
-                $return[$shortcode[2]] = @shortcode_parse_atts($shortcode[3]);
+                $return[$shortcode[2]] = @\shortcode_parse_atts($shortcode[3]);
             }
         }
 

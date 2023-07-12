@@ -448,7 +448,7 @@ class Processor
 
         // If a scalar passes a run through wp_kses_post.
         if ($matchType == 'general_xss' && is_scalar($value) && function_exists('wp_kses_post')) {
-            return $value != @wp_kses_post($value);
+            return $value != @\wp_kses_post($value);
         }
 
         // If a scalar passes a run through inline_js_xss.
