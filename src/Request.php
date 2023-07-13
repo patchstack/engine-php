@@ -127,7 +127,7 @@ class Request
         }
 
         // Special condition for the IP address.
-        if ($type === 'server' && $t[0] === 'ip') {
+        if ($type === 'server' && isset($t[0]) && $t[0] === 'ip') {
             return [$this->extension->getIpAddress()];
         }
 
@@ -248,12 +248,16 @@ class Request
      */
     public function getValuesByWildcard($data, $parameter)
     {
+        if (!is_array($data)) {
+            return [];
+        }
+
         // First we want to get the furthest possible down.
-        $t = explode('.', $parameter);
-        array_shift($t);
+        $parameters = explode('.', $parameter);
+        array_shift($parameters);
         $end  = $data;
         $wildcard = '';
-        foreach ( $t as $var ) {
+        foreach ( $parameters as $var ) {
             
             // We hit the wildcard.
             if (strpos($var, '*') !== false) {
@@ -277,7 +281,7 @@ class Request
         // Based on the data that is left, find the wildcard matches.
         $return = [];
         foreach ($end as $key => $value) {
-            if (stripos($key, $wildcard) !== false) {
+            if (strpos($key, $wildcard) !== false) {
                 $return[] = $value;
             }
         }

@@ -375,7 +375,7 @@ class Processor
 
         // If an array of values is in another array of values.
         if ($matchType == 'array_in_array' && is_array($value) && is_array($matchValue)) {
-            return @array_intersect($value, $matchValue);
+            return @count(@array_intersect($value, $matchValue)) > 0;
         }
 
         // If a specific parameter key matches a sub-match condition.
