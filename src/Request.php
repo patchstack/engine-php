@@ -239,54 +239,88 @@ class Request
         return $value;
     }
 
-    /**
+     /**
      * Given an array, get all parameters which match a certain wildcard.
      * 
      * @param array $data
-     * @param string $parameter
+     * @param string $pattern
      * @return array
      */
-    public function getValuesByWildcard($data, $parameter)
-    {
+    public function getValuesByWildcard($data, $pattern) {
         if (!is_array($data)) {
             return [];
         }
 
-        // First we want to get the furthest possible down.
-        $parameters = explode('.', $parameter);
-        array_shift($parameters);
-        $end  = $data;
-        $wildcard = '';
-        foreach ( $parameters as $var ) {
-            
-            // We hit the wildcard.
-            if (strpos($var, '*') !== false) {
-                $wildcard = str_replace('*', '', $var);
-                break;
-            }
-            
-            // We're not at the end and there's no wildcard.
-            if (!isset( $end[ $var ] ) && strpos($var, '*') === false) {
-                return [];
-            }
-
-            $end = $end[ $var ];
+        // Split the pattern into segments
+        $segments = explode('.', $pattern);
+        array_shift($segments);
+    
+        // Initialize the results
+        $results = [];
+    
+        // Start with the entire data array
+        $currentData = [$data];
+    
+        // Check if the pattern ends with an asterisk and pop the last segment
+        $endWithAsterisk = substr(end($segments), -1) === "*";
+        if ($endWithAsterisk) {
+            $lastSegment = rtrim(array_pop($segments), '*');
         }
-        
-        // No need to continue if there is nothing to match.
-        if (!is_array($end) || count($end) == 0) {
-            return [];
+    
+        // Loop through each segment
+        foreach ($segments as $segment) {
+            $newData = [];
+    
+            // Check if the segment contains an asterisk
+            if ($segment === '*') {
+                foreach ($currentData as $dataItem) {
+                    if (is_array($dataItem)) {
+                        foreach ($dataItem as $subItem) {
+                            $newData[] = $subItem;
+                        }
+                    }
+                }
+            } else {
+                // Loop through each data item
+                foreach ($currentData as $dataItem) {
+                    // Ensure the data item is an array and contains the segment
+                    if (is_array($dataItem) && isset($dataItem[$segment])) {
+                        $newData[] = $dataItem[$segment];
+                    }
+                }
+            }
+    
+            // Replace the current data with the new data
+            $currentData = $newData;
         }
-
-        // Based on the data that is left, find the wildcard matches.
-        $return = [];
-        foreach ($end as $key => $value) {
-            if (strpos($key, $wildcard) !== false) {
-                $return[] = $value;
+    
+        if ($endWithAsterisk) {
+            $finalData = [];
+            foreach ($currentData as $dataItem) {
+                if (is_array($dataItem)) {
+                    foreach ($dataItem as $key => $subItem) {
+                        if (strpos($key, $lastSegment) === 0) {
+                            $finalData[] = $subItem;
+                        }
+                    }
+                }
+            }
+            $currentData = $finalData;
+        }
+    
+        // Loop through the current data to fetch the results
+        foreach ($currentData as $dataItem) {
+            if (is_array($dataItem)) {
+                foreach ($dataItem as $value) {
+                    $results[] = $value;
+                }
+            } else {
+                $results[] = $dataItem;
             }
         }
-        
-        return $return;
+    
+        // Return the results
+        return $results;
     }
 
     /**
