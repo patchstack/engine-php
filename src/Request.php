@@ -42,7 +42,7 @@ class Request
     public function getParameterValues($parameter, $data = [])
     {
         // For when a rule contains sub-rules.
-        if (empty($parameter) || ctype_digit($parameter)) {
+        if (empty($parameter) || ctype_digit($parameter) || !is_array($data)) {
             return null;
         }
 
