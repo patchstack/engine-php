@@ -182,5 +182,13 @@
         "cat":"TEST",
         "type":"BLOCK",
         "type_params":null
+    },
+    {
+        "id":24,
+        "title":"Block test parameter being present in the URL with array of parameters.",
+        "rules":[{"parameter":["get.test","get.test2"],"match":{"type":"isset"}}],
+        "cat":"TEST",
+        "type":"BLOCK",
+        "type_params":null
     }
 ]

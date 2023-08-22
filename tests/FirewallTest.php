@@ -414,5 +414,14 @@ final class FirewallTest extends TestCase
         );
         $this->assertFalse($this->processor->launch(false));
         $this->alterPayload();
+
+        // Block request with test parameter present in the URL.
+        $this->setUpFirewallProcessor([$this->rules[23]]);
+        $this->alterPayload(
+            ['GET' => [
+            'test2' => 'yes'
+            ]]
+        );
+        $this->assertFalse($this->processor->launch(false));
     }
 }

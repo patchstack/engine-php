@@ -204,44 +204,54 @@ class Processor
                 continue;
             }
 
-            // Extract the value of the paramater that we want.
-            $values = $this->request->getParameterValues($rule['parameter']);
-            if (is_null($values) && $rule['parameter'] !== false && $rule['parameter'] != 'rules') {
-                continue;
+            // Cast to an array so we can iterate through all parameters.
+            if (!is_array($rule['parameter'])) {
+                $parameters = [$rule['parameter']];
+            } else {
+                $parameters = $rule['parameter'];
             }
 
-            // For special parameter values we just set the array to a single null value.
-            if ($rule['parameter'] === false || $rule['parameter'] == 'rules') {
-                $values = [null];
-            }
-
-            // For all field matches, we want to execute the rule against it.
-            foreach ($values as $value) {
-                // Apply mutations, if any.
-                if (isset($rule['mutations']) && is_array($rule['mutations'])) {
-                    $value = $this->request->applyMutation($rule['mutations'], $value);
-                    if (is_null($value)) {
-                        continue;
-                    }
+            // Iterate through all parameters.
+            foreach ($parameters as $parameter) {
+                // Extract the value of the paramater that we want.
+                $values = $this->request->getParameterValues($parameter);
+                if (is_null($values) && $parameter !== false && $parameter != 'rules') {
+                    continue;
                 }
 
-                // Perform the matching.
-                if (isset($rule['match']) && is_array($rule['match']) || isset($rule['rules'])) {
+                // For special parameter values we just set the array to a single null value.
+                if ($parameter === false || $parameter == 'rules') {
+                    $values = [null];
+                }
 
-                    // Do we have to process child-rules?
-                    if (isset($rule['rules'])) {
-                        $match = $this->executeFirewall($rule['rules']);
-                    } else {
-                        $match = $this->matchParameterValue($rule['match'], $value);
+                // For all field matches, we want to execute the rule against it.
+                foreach ($values as $value) {
+                    // Apply mutations, if any.
+                    if (isset($rule['mutations']) && is_array($rule['mutations'])) {
+                        $value = $this->request->applyMutation($rule['mutations'], $value);
+                        if (is_null($value)) {
+                            continue;
+                        }
                     }
 
-                    // Is the rule a match?
-                    if ($match) {
-                        // In case there are multiple rules, they may require chained AND conditions.
-                        if ($inclusiveCount <= 1 || !isset($rule['inclusive']) || $rule['inclusive'] !== true) {
-                            return true;
+                    // Perform the matching.
+                    if (isset($rule['match']) && is_array($rule['match']) || isset($rule['rules'])) {
+
+                        // Do we have to process child-rules?
+                        if (isset($rule['rules'])) {
+                            $match = $this->executeFirewall($rule['rules']);
                         } else {
-                            $inclusiveHits++;
+                            $match = $this->matchParameterValue($rule['match'], $value);
+                        }
+
+                        // Is the rule a match?
+                        if ($match) {
+                            // In case there are multiple rules, they may require chained AND conditions.
+                            if ($inclusiveCount <= 1 || !isset($rule['inclusive']) || $rule['inclusive'] !== true) {
+                                return true;
+                            } else {
+                                $inclusiveHits++;
+                            }
                         }
                     }
                 }
@@ -249,7 +259,7 @@ class Processor
         }
 
         // In case we hit all of the AND conditions.
-        if ($inclusiveCount > 1 && $inclusiveHits === $inclusiveCount) {
+        if ($inclusiveCount > 1 && $inclusiveHits >= $inclusiveCount) {
             return true;
         }
 
