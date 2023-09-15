@@ -329,8 +329,9 @@ class Processor
 
         // If a scalar is a ctype alnum with underscores, dashes and spaces.
         if ($matchType == 'ctype_special' && is_scalar($value)) {
-            $value = str_replace([' ', '_', '-'], '', $value);
-            return @ctype_alnum($value) === $matchValue;
+            $value = str_replace([' ', '_', '-', ','], '', $value);
+            $isClean = (bool) (@preg_match('/^[\w$\x{0080}-\x{FFFF}]*$/u', $value) > 0);
+            return $isClean === $matchValue;
         }
 
         // If a scaler is a ctype digit.
@@ -340,7 +341,8 @@ class Processor
 
         // If a scaler is a ctype alnum.
         if ($matchType == 'ctype_alnum' && is_scalar($value)) {
-            return @ctype_alnum($value) === $matchValue;
+            $isClean = (bool) (@preg_match('/^[\w$\x{0080}-\x{FFFF}]*$/u', $value) > 0);
+            return $isClean === $matchValue;
         }
 
         // If a scalar is numeric.
