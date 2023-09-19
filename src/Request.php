@@ -200,6 +200,10 @@ class Request
             'getShortcodeAtts' => [
                 'args' => [],
                 'type' => 'is_string'
+            ],
+            'getBlockAtts' => [
+                'args' => [],
+                'type' => 'is_string'
             ]
         ];
 
@@ -223,6 +227,8 @@ class Request
                     $value = $this->getArrayValues($value);
                 } elseif ($mutation == 'getShortcodeAtts') {
                     $value = $this->getShortcodeAtts($value);
+                } elseif ($mutation == 'getBlockAtts') {
+                    $value = $this->getBlockAtts($value);
                 } else {
                     $value = call_user_func_array($mutation, array_merge([$value], $allowed[$mutation]['args']));
                 }
@@ -417,5 +423,91 @@ class Request
         }
 
         return $return; 
+    }
+
+    /**
+     * Given a string, fetch all blocks and its attributes.
+     * 
+     * @param string $value
+     * @return array
+     */
+    public function getBlockAtts($value)
+    {
+        // For rare cases where this may not be defined.
+        if (!function_exists('parse_blocks')) {
+            return [];
+        }
+
+        // Parse the blocks using the WordPress core function.
+        $blocks = @\parse_blocks($value);
+        if (count($blocks) === 0) {
+            return [];
+        }
+
+        // Get the inner blocks recursively.
+        $return = $this->getInnerBlocks($blocks, []);
+
+        // Return the blocks.
+        return $return;
+    }
+
+    /**
+     * Given an array of inner blocks, fetch all of its attributes and merge together.
+     * 
+     * @param array $innerBlocks
+     * @return array
+     */
+    private function getInnerBlocks(array $innerBlocks, array $currentBlocks)
+    {
+        foreach ($innerBlocks as $block) {
+            // Essential values to have.
+            if (!isset($block['blockName'], $block['attrs'])) {
+                continue;
+            }
+
+            // If the block already exists, merge all the atts together.
+            if (isset($currentBlocks[$block['blockName']])) {
+                $currentBlocks[$block['blockName']] = $this->mergeArraysConcatenateValues($currentBlocks[$block['blockName']], $block['attrs']);
+            } else {
+                $currentBlocks[$block['blockName']] = $block['attrs'];
+            }
+
+            // In case the block has innerblocks, we need to fetch them all and merge them together.
+            if (isset($block['innerBlocks']) && is_array($block['innerBlocks']) && count($block['innerBlocks']) > 0) {
+                $currentBlocks = $this->getInnerBlocks($block['innerBlocks'], $currentBlocks);
+            }
+        }
+
+        return $currentBlocks;
+    }
+
+    /**
+     * Given 2 ararys, merge them together while concatenating its values.
+     * 
+     * @param array $array1
+     * @param array $array2
+     * @return array
+     */
+    public function mergeArraysConcatenateValues($array1, $array2) {
+        if (!is_array($array1) || !is_array($array2)) {
+            return [];
+        }
+    
+        foreach ($array2 as $key => $value2) {
+            if (array_key_exists($key, $array1)) {
+                if (is_array($value2) && is_array($array1[$key])) {
+                    // If both values are arrays, recursively merge them
+                    $array1[$key] = $this->mergeArraysConcatenateValues($array1[$key], $value2);
+                } else {
+                    // Concatenate values if keys are identical
+                    $array1[$key] .= $value2;
+                }
+            } else {
+                // If the key doesn't exist in array1, simply add it
+                $array1[$key] = $value2;
+            }
+        }
+    
+        return $array1;
     }
 }

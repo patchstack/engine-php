@@ -273,6 +273,50 @@ final class RequestTest extends TestCase
         $expected = '{"name":"John","age":30}';
         $result = $this->request->applyMutation($mutations, $value);
         $this->assertEquals($expected, $result);
+
+        // Test with multi-dimensional arrays.
+        $array1 = [
+            'name' => 'John',
+            'age' => 30,
+            'address' => [
+                'city' => 'New York',
+                'zip' => '10001',
+                'street' => 'a street'
+            ]
+        ];
+
+        $array2 = [
+            'name' => 'Doe',
+            'email' => 'john@example.com',
+            'address' => [
+                'street' => '123 Main St',
+            ]
+        ];
+
+        $expected = [
+            'name' => 'JohnDoe',
+            'age' => 30,
+            'email' => 'john@example.com',
+            'address' => [
+                'city' => 'New York',
+                'zip' => '10001',
+                'street' => 'a street123 Main St',
+            ]
+        ];
+
+        $result = $this->request->mergeArraysConcatenateValues($array1, $array2);
+        $this->assertEquals($expected, $result);
+
+        // Test with non-array inputs, it should return an empty array
+        $resultNonArray = $this->request->mergeArraysConcatenateValues('This is not an array', ['name' => 'John']);
+        $this->assertEquals([], $resultNonArray);
+
+        // Test with arrays containing numeric keys
+        $array3 = [1 => 'One', 2 => 'Two'];
+        $array4 = [2 => 'Dos', 3 => 'Three'];
+        $expectedNumericKeys = [1 => 'One', 2 => 'TwoDos', 3 => 'Three'];
+        $resultNumericKeys = $this->request->mergeArraysConcatenateValues($array3, $array4);
+        $this->assertEquals($expectedNumericKeys, $resultNumericKeys);
     }
 
     public function testGetParameterValues()
