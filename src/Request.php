@@ -97,7 +97,7 @@ class Request
                 }
 
                 // Determine if it's base64 encoded.
-                if (preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $data)) {
+                if (is_string($data) && preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $data)) {
                     $decoded = base64_decode($data, true);
                     if ($decoded !== false) {
                         $encoding = mb_detect_encoding($decoded);
@@ -108,9 +108,11 @@ class Request
                 }
 
                 // Determine if it's JSON encoded.
-                $result = json_decode($data, true);
-                if (is_array($result)) {
-                    $data = $result;
+                if (is_string($data)) {
+                    $result = json_decode($data, true);
+                    if (is_array($result)) {
+                        $data = $result;
+                    }
                 }
 
                 // If it's not an array, no need to continue.
