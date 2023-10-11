@@ -328,25 +328,25 @@ class Processor
         }
 
         // If a scalar is a ctype alnum with underscores, dashes and spaces.
-        if ($matchType == 'ctype_special' && is_scalar($value)) {
+        if ($matchType == 'ctype_special' && is_scalar($value) && $value != '') {
             $value = str_replace([' ', '_', '-', ','], '', $value);
             $isClean = (bool) (@preg_match('/^[\w$\x{0080}-\x{FFFF}]*$/u', $value) > 0);
             return $isClean === $matchValue;
         }
 
         // If a scaler is a ctype digit.
-        if ($matchType == 'ctype_digit' && is_scalar($value)) {
+        if ($matchType == 'ctype_digit' && is_scalar($value) && $value != '') {
             return @ctype_digit($value) === $matchValue;
         }
 
         // If a scaler is a ctype alnum.
-        if ($matchType == 'ctype_alnum' && is_scalar($value)) {
+        if ($matchType == 'ctype_alnum' && is_scalar($value) && $value != '') {
             $isClean = (bool) (@preg_match('/^[\w$\x{0080}-\x{FFFF}]*$/u', $value) > 0);
             return $isClean === $matchValue;
         }
 
         // If a scalar is numeric.
-        if ($matchType == 'is_numeric' && is_scalar($value)) {
+        if ($matchType == 'is_numeric' && is_scalar($value) && $value != '') {
             return @is_numeric($value) === $matchValue;
         }
 
