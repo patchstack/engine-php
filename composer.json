@@ -1,5 +1,5 @@
 {
-    "name": "patchstack/firewall",
+    "name": "patchstack/engine-php",
     "description": "The firewall engine of Patchstack.",
     "type": "library",
     "require": {
