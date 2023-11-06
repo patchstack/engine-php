@@ -371,7 +371,7 @@ class Processor
         }
 
         // If the user does not have a WP privilege.
-        if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can') && !$this->mustUsePluginCall) {
+        if ($matchType == 'current_user_cannot' && is_scalar($matchValue) && function_exists('current_user_can') && function_exists('wp_get_current_user') && !$this->mustUsePluginCall) {
             return @!current_user_can($matchValue);
         }
 
