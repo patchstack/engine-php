@@ -251,6 +251,7 @@ class Processor
                                 return true;
                             } else {
                                 $inclusiveHits++;
+                                break 2;
                             }
                         }
                     }
