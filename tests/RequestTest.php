@@ -336,6 +336,7 @@ final class RequestTest extends TestCase
         $parameter = 'log';
         $expected = [
             'post' => $_POST,
+            'files' => [],
             'raw' => null
         ];
         $result = $this->request->getParameterValues($parameter);

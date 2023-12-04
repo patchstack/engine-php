@@ -66,6 +66,7 @@ class Request
             case 'log':
                 return [
                     'post' => $_POST,
+                    'files' => $_FILES,
                     'raw' => $this->getParameterValues('raw')
                 ];
                 break;
@@ -414,7 +415,7 @@ class Request
                 $atts = @\shortcode_parse_atts($shortcode[3]);
                 foreach ($atts as $key => $value) {
                     if (isset($return[$shortcode[2]][$key])) {
-                        $return[$shortcode[2]][$key] .= $value;
+                        $return[$shortcode[2]][$key] = $return[$shortcode[2]][$key] . $value;
                     } else {
                         $return[$shortcode[2]][$key] = $value;
                     }
