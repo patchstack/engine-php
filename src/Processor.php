@@ -103,9 +103,8 @@ class Processor
     public function launch($mustExit = true)
     {
         // Determine if the user is temporarily blocked from the site before we do anything else.
-        if (
-            $this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts) && !$this->extension->canBypass($this->mustUsePluginCall)
-        ) {
+        $isWhitelisted = $this->extension->canBypass($this->mustUsePluginCall);
+        if (!$isWhitelisted && $this->extension->isBlocked($this->autoblockMinutes, $this->autoblockTime, $this->autoblockAttempts)) {
             $this->extension->forceExit(22);
         }
 
@@ -118,9 +117,6 @@ class Processor
         if (count($this->firewallRules) == 0 && count($this->whitelistRules) == 0) {
             return true;
         }
-
-        // Determine if the current request is whitelisted or not.
-        $isWhitelisted = $this->extension->canBypass($this->mustUsePluginCall);
 
         // Merge the rules together. First iterate through the whitelist rules because
         // we want to whitelist the request if there's a whitelist rule match.
